@@ -1,0 +1,25 @@
+{
+  "name": "store-management-test",
+  "version": "1.0.0",
+  "description": "Jumbo Store Management Test Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "jumbo",
+    "api",
+    "store-management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jumbo-wrapper": "file:../external/jumbo-wrapper",
+    "puppeteer": "^24.37.2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "jumbo-api",
+  "version": "1.0.0",
+  "description": "Unofficial Jumbo.com GraphQL API wrapper for automating grocery shopping",
+  "main": "index.js",
+  "scripts": {
+    "test": "node example.js"
+  },
+  "keywords": [
+    "jumbo",
+    "groceries",
+    "api",
+    "graphql",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.4.0"
+  }
+}
