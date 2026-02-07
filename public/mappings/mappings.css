@@ -1,0 +1,62 @@
+/* Mappings-specific styles */
+
+.unmapped-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: rgba(255, 170, 0, 0.1);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 8px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+/* Product Search Results in Modal */
+.product-results {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.product-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.product-result-item:last-child {
+    border-bottom: none;
+}
+
+.product-result-item:hover {
+    background: rgba(24, 180, 89, 0.1);
+}
+
+.product-result-image {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.product-result-info {
+    flex: 1;
+}
+
+/* Selected Product */
+.selected-product {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-dark);
+    border: 1px solid var(--neon-green);
+    border-radius: 8px;
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - Grocies</title>
+    <link rel="stylesheet" href="/shared/common.css">
+    <link rel="stylesheet" href="store.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Login Section -->
+        <div id="login-section" class="card hidden">
+            <h2>Login to Jumbo</h2>
+            <p class="text-muted mb-20">Enter your Jumbo account credentials to browse products and manage your basket.</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" name="username" required placeholder="your-email@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" id="remember" name="remember" checked>
+                        Remember credentials
+                    </label>
+                </div>
+                <button type="submit" id="login-btn" class="btn btn-primary">
+                    <span class="spinner hidden"></span>
+                    <span class="btn-text">Login</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Store Section -->
+        <div id="store-section" class="hidden">
+            <div class="section-header">
+                <h1>Store</h1>
+                <div style="display:flex;gap:10px;align-items:center">
+                    <span id="user-info" class="text-muted"></span>
+                    <button id="logout-btn" class="btn btn-danger btn-small">Logout</button>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-bar mb-20">
+                <input type="search" id="search-input" placeholder="Search products (e.g. 'melk', 'brood', 'kaas')">
+                <button id="search-btn" class="btn btn-primary">Search</button>
+            </div>
+
+            <!-- Results -->
+            <div id="products-grid" class="products-grid"></div>
+        </div>
+    </div>
+
+    <script src="/shared/utils.js"></script>
+    <script src="store.js"></script>
+</body>
+</html>

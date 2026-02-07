@@ -1,0 +1,136 @@
+/* Queue-specific styles */
+
+.queue-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.queue-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: all 0.2s;
+    cursor: grab;
+}
+
+.queue-item:hover {
+    border-color: var(--neon-green);
+}
+
+.queue-item.dragging {
+    opacity: 0.4;
+    border-color: var(--neon-green);
+    box-shadow: 0 0 20px var(--neon-green-glow);
+}
+
+.queue-drag-handle {
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: grab;
+    user-select: none;
+    min-width: 20px;
+    text-align: center;
+}
+
+.queue-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-dark);
+}
+
+.queue-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.queue-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--neon-green);
+    font-size: 24px;
+    font-weight: 700;
+    opacity: 0.3;
+}
+
+.queue-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.queue-item-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.queue-item-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.queue-item-meta span::after {
+    content: "\00b7";
+    margin-left: 8px;
+}
+
+.queue-item-meta span:last-child::after {
+    content: "";
+}
+
+.queue-item-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* History */
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-name {
+    font-weight: 500;
+}
+
+.history-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .queue-item {
+        flex-wrap: wrap;
+    }
+
+    .queue-item-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

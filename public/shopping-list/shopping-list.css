@@ -1,0 +1,112 @@
+/* Shopping List specific styles */
+
+.summary-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.recipe-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.category-header {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.category-header:first-child {
+    margin-top: 0;
+}
+
+/* Shopping Items */
+.shopping-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+}
+
+.shopping-item.unmapped {
+    border-color: rgba(255, 170, 0, 0.3);
+    background: rgba(255, 170, 0, 0.05);
+}
+
+.shopping-item-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--neon-green);
+    cursor: pointer;
+}
+
+.shopping-item-info {
+    flex: 1;
+}
+
+.shopping-item-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.shopping-item-product {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.shopping-item-image {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 3px;
+}
+
+.shopping-item-price {
+    font-weight: 700;
+    color: var(--neon-green);
+    white-space: nowrap;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--neon-green);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px var(--neon-green-glow);
+}
+
+.result-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 8px;
+}
+
+.result-list li {
+    padding: 4px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}

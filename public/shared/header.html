@@ -1,0 +1,29 @@
+<header class="main-header">
+    <div class="logo"><a href="/">Grocies</a></div>
+    <nav>
+        <a href="/store/">Store</a>
+        <a href="/recipes/">Recipes</a>
+        <a href="/queue/" class="badge-container">
+            Queue
+            <span class="badge hidden" id="queue-count">0</span>
+        </a>
+        <a href="/mappings/">Mappings</a>
+        <a href="/shopping-list/">Shopping List</a>
+    </nav>
+    <div class="user-actions">
+        <button id="basket-btn" class="btn btn-secondary btn-small badge-container">
+            Basket
+            <span class="badge hidden" id="basket-count">0</span>
+        </button>
+    </div>
+</header>
+
+<!-- Basket Sidebar -->
+<div id="basket-overlay" class="basket-overlay"></div>
+<div id="basket-sidebar" class="basket-sidebar">
+    <div class="basket-sidebar-header">
+        <h2>Basket</h2>
+        <button id="close-basket-btn" class="btn-close">&times;</button>
+    </div>
+    <div id="basket-content" class="basket-sidebar-content"></div>
+</div>

@@ -1,0 +1,15 @@
+/* Store-specific styles */
+#login-section {
+    max-width: 500px;
+    margin: 60px auto;
+}
+
+#login-section h2 {
+    margin-bottom: 8px;
+}
+
+.btn .spinner {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}

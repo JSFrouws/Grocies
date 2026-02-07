@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue - Grocies</title>
+    <link rel="stylesheet" href="/shared/common.css">
+    <link rel="stylesheet" href="queue.css">
+</head>
+<body>
+    <div class="page-container">
+        <div class="section-header">
+            <h1>Meal Queue</h1>
+            <div style="display:flex;gap:10px">
+                <button class="btn btn-secondary" onclick="addRandomRecipe()">Add Random</button>
+                <a href="/shopping-list/" class="btn btn-primary">Shopping List</a>
+            </div>
+        </div>
+
+        <div id="queue-info" class="queue-info mb-20"></div>
+
+        <!-- Queue List -->
+        <div id="queue-list" class="queue-list"></div>
+
+        <!-- History -->
+        <div class="mt-20">
+            <h2 style="margin-bottom:16px">Recent History</h2>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script src="/shared/utils.js"></script>
+    <script src="queue.js"></script>
+</body>
+</html>

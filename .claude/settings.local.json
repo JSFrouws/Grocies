@@ -10,7 +10,9 @@
       "Bash(node parse-har.js:*)",
       "Bash(npm start)",
       "Bash(ping:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(powershell:*)",
+      "Bash(python -m json.tool:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\-\\Documents\\code\\Grocies"
