@@ -12,6 +12,80 @@
     flex-wrap: wrap;
 }
 
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    gap: 6px;
+}
+
+.view-toggle .btn.active {
+    background: var(--spierings-yellow);
+    color: var(--spierings-dark);
+}
+
+.view-toggle .btn.active::before,
+.view-toggle .btn.active::after {
+    background: var(--spierings-yellow);
+}
+
+/* Recipe Groups */
+.recipe-group {
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.recipe-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-bg-alt);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.recipe-group-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.recipe-group-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.recipe-group-items {
+    padding: 8px;
+}
+
+.recipe-group-items .shopping-item {
+    margin-bottom: 4px;
+}
+
+.recipe-group-items .shopping-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Skip badge */
+.skip-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(55, 63, 67, 0.08);
+    color: var(--text-muted);
+    margin-left: 6px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Skipped item styling */
+.shopping-item.skipped {
+    opacity: 0.55;
+}
+
 .category-header {
     font-size: 14px;
     color: var(--text-secondary);
@@ -77,7 +151,7 @@
 
 .shopping-item-price {
     font-weight: 700;
-    color: var(--neon-green);
+    color: var(--spierings-orange);
     white-space: nowrap;
 }
 
@@ -109,4 +183,67 @@
     font-size: 13px;
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border-color);
+}
+
+/* Recipe group title with checkbox */
+.recipe-group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.recipe-group-title input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--neon-green);
+    cursor: pointer;
+}
+
+.recipe-group-title h3 {
+    margin: 0;
+}
+
+/* Bought state */
+.recipe-group.recipe-bought {
+    opacity: 0.6;
+    border-color: var(--neon-green);
+}
+
+.bought-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(46, 125, 50, 0.15);
+    color: var(--color-success);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+/* Package & Stock Info */
+.shopping-item-calc {
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.package-info {
+    color: var(--spierings-orange);
+    font-weight: 600;
+}
+
+.stock-info {
+    color: var(--neon-green);
+    font-weight: 600;
+}
+
+/* Alternative / Map button */
+.btn-alternative {
+    flex-shrink: 0;
+    min-width: 32px;
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 1;
 }

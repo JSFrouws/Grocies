@@ -39,7 +39,7 @@ function showToast(message, type = 'info', duration = 4000) {
 // =====================
 // Loading Overlay
 // =====================
-function showLoading(text = 'Loading...') {
+function showLoading(text = 'Laden...') {
     let overlay = document.getElementById('loading-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -94,7 +94,7 @@ async function apiRequest(endpoint, options = {}) {
         if (error.message !== 'Failed to fetch') {
             showToast(error.message, 'error');
         } else {
-            showToast('Connection failed. Is the server running?', 'error');
+            showToast('Verbinding mislukt. Draait de server?', 'error');
         }
         throw error;
     }
@@ -169,17 +169,27 @@ async function loadHeader(currentPage) {
         const basketOverlay = document.getElementById('basket-overlay');
         if (basketOverlay) basketOverlay.addEventListener('click', closeBasketSidebar);
 
+        // Setup close auth sidebar
+        const closeAuthBtn = document.getElementById('close-auth-btn');
+        if (closeAuthBtn) closeAuthBtn.addEventListener('click', closeAuthSidebar);
+
+        const authOverlay = document.getElementById('auth-overlay');
+        if (authOverlay) authOverlay.addEventListener('click', closeAuthSidebar);
+
         // Close on Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeBasketSidebar();
-                // Close any open modals
+                closeAuthSidebar();
                 document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
             }
         });
 
         // Update queue count badge
         updateQueueBadge();
+
+        // Kick off background session check — non-blocking
+        checkAndEnsureSession();
 
     } catch (error) {
         console.error('Failed to load header:', error);
@@ -217,7 +227,7 @@ async function viewBasket() {
     openBasketSidebar();
     const content = document.getElementById('basket-content');
     if (content) {
-        content.innerHTML = '<div class="basket-loading"><div class="spinner"></div> Loading basket...</div>';
+        content.innerHTML = '<div class="basket-loading"><div class="spinner"></div> Mandje laden...</div>';
     }
 
     try {
@@ -226,7 +236,7 @@ async function viewBasket() {
         updateBasketBadge(data.itemCount || 0);
     } catch (error) {
         if (content) {
-            content.innerHTML = '<p class="basket-empty">Could not load basket. Are you logged in?</p>';
+            content.innerHTML = '<p class="basket-empty">Kon mandje niet laden. Ben je ingelogd?</p>';
         }
     }
 }
@@ -236,7 +246,7 @@ function displayBasket(data) {
     if (!content) return;
 
     if (!data || !data.items || data.items.length === 0) {
-        content.innerHTML = '<p class="basket-empty">Your basket is empty</p>';
+        content.innerHTML = '<p class="basket-empty">Je mandje is leeg</p>';
         return;
     }
 
@@ -276,8 +286,8 @@ function displayBasket(data) {
     content.innerHTML = `
         ${itemsHTML}
         <div class="basket-total">
-            <strong>Items:</strong> ${data.itemCount}<br>
-            <strong>Total:</strong> \u20AC${(total / 100).toFixed(2)}
+            <strong>Artikelen:</strong> ${data.itemCount}<br>
+            <strong>Totaal:</strong> \u20AC${(total / 100).toFixed(2)}
         </div>
     `;
 }
@@ -321,7 +331,7 @@ window.removeBasketItem = async function(lineId, title) {
             body: JSON.stringify({ lineId })
         });
         if (data.success) {
-            showToast('Item removed', 'success', 2000);
+            showToast('Item verwijderd', 'success', 2000);
             displayBasket(data);
             updateBasketBadge(data.itemCount || 0);
         }
@@ -352,3 +362,182 @@ function debounce(fn, delay = 300) {
         timer = setTimeout(() => fn(...args), delay);
     };
 }
+
+// =====================
+// Auth / Connection Sidebar
+// =====================
+
+function openAuthSidebar() {
+    const sidebar = document.getElementById('auth-sidebar');
+    const overlay = document.getElementById('auth-overlay');
+    if (sidebar) sidebar.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    // Refresh status display when sidebar opens
+    refreshAuthSidebarDisplay();
+}
+
+function closeAuthSidebar() {
+    const sidebar = document.getElementById('auth-sidebar');
+    const overlay = document.getElementById('auth-overlay');
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// dot states: 'ok' | 'stale' | 'offline' | 'checking'
+function setAuthDot(state, label) {
+    const dotIds = ['auth-dot', 'auth-sidebar-dot'];
+    const states = { ok: 'auth-dot--ok', stale: 'auth-dot--stale', offline: 'auth-dot--offline', checking: 'auth-dot--checking' };
+    dotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'auth-dot ' + (states[state] || states.checking);
+    });
+    const labelEl = document.getElementById('auth-dot-label');
+    if (labelEl) labelEl.textContent = label || '';
+    const sidebarText = document.getElementById('auth-sidebar-status-text');
+    if (sidebarText) sidebarText.textContent = label || '';
+}
+
+function refreshAuthSidebarDisplay(status) {
+    // status is the last known /api/auth/status response object (optional)
+    const loginSection = document.getElementById('auth-login-section');
+    const loggedinSection = document.getElementById('auth-loggedin-section');
+    const reloginSection = document.getElementById('auth-relogin-section');
+    const userEl = document.getElementById('auth-sidebar-user');
+    const ageEl = document.getElementById('auth-sidebar-age');
+
+    if (!loginSection) return; // sidebar not in DOM yet
+
+    if (!status) {
+        // No info yet — hide everything
+        if (loginSection) loginSection.style.display = 'none';
+        if (loggedinSection) loggedinSection.style.display = 'none';
+        if (reloginSection) reloginSection.style.display = 'none';
+        return;
+    }
+
+    if (status._relogining) {
+        loginSection.style.display = 'none';
+        loggedinSection.style.display = 'none';
+        reloginSection.style.display = 'block';
+        return;
+    }
+
+    reloginSection.style.display = 'none';
+
+    if (status.isAuthenticated) {
+        loginSection.style.display = 'none';
+        loggedinSection.style.display = 'block';
+        if (userEl) userEl.textContent = status.username ? `Ingelogd als ${status.username}` : 'Ingelogd';
+        if (ageEl && status.sessionAge != null) {
+            const mins = Math.round(status.sessionAge / 60000);
+            const freshFor = status.sessionTTL ? Math.round((status.sessionTTL - status.sessionAge) / 60000) : null;
+            ageEl.textContent = `Sessie gevalideerd ${mins} minuten geleden` +
+                (freshFor != null && freshFor > 0 ? ` · volgende check over ~${freshFor} min` : '');
+        } else if (ageEl) {
+            ageEl.textContent = '';
+        }
+    } else {
+        loginSection.style.display = 'block';
+        loggedinSection.style.display = 'none';
+        if (userEl) userEl.textContent = '';
+        if (ageEl) ageEl.textContent = '';
+    }
+}
+
+// Main session health routine — called once per page load from loadHeader().
+// 1. GET /api/auth/status (fast, no Jumbo call)
+// 2. If not healthy → try background re-login
+// 3. Update the status dot accordingly
+async function checkAndEnsureSession() {
+    setAuthDot('checking', '...');
+    let status;
+    try {
+        status = await fetch('/api/auth/status').then(r => r.json());
+    } catch (e) {
+        setAuthDot('offline', 'Geen server');
+        return;
+    }
+
+    refreshAuthSidebarDisplay(status);
+
+    if (status.isAuthenticated && status.sessionHealthy) {
+        setAuthDot('ok', status.username || 'Verbonden');
+        return;
+    }
+
+    if (status.isAuthenticated && !status.sessionHealthy) {
+        // Cookies loaded but TTL expired — re-authenticate in background
+        setAuthDot('stale', 'Sessie verloopt...');
+    } else {
+        // Not authenticated
+        if (!status.hasSavedCredentials) {
+            setAuthDot('offline', 'Niet ingelogd');
+            refreshAuthSidebarDisplay(status);
+            return;
+        }
+        setAuthDot('stale', 'Herverbinden...');
+    }
+
+    // Attempt silent re-login
+    refreshAuthSidebarDisplay({ ...status, _relogining: true });
+    try {
+        const result = await fetch('/api/auth/relogin', { method: 'POST' }).then(r => r.json());
+        if (result.success) {
+            const fresh = await fetch('/api/auth/status').then(r => r.json());
+            setAuthDot('ok', fresh.username || 'Verbonden');
+            refreshAuthSidebarDisplay(fresh);
+        } else {
+            setAuthDot('offline', 'Niet ingelogd');
+            refreshAuthSidebarDisplay({ ...status, isAuthenticated: false });
+        }
+    } catch (e) {
+        setAuthDot('offline', 'Herverbinden mislukt');
+    }
+}
+
+// Login form submit
+window.doJumboLogin = async function() {
+    const email = document.getElementById('auth-email')?.value?.trim();
+    const password = document.getElementById('auth-password')?.value;
+    const errEl = document.getElementById('auth-login-error');
+    const btn = document.getElementById('auth-login-btn');
+    if (!email || !password) {
+        if (errEl) { errEl.textContent = 'Vul e-mail en wachtwoord in.'; errEl.style.display = 'block'; }
+        return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Bezig met inloggen...'; }
+    setAuthDot('checking', 'Inloggen...');
+    if (errEl) errEl.style.display = 'none';
+    try {
+        const result = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password, remember: true })
+        });
+        if (result.success) {
+            if (document.getElementById('auth-password')) document.getElementById('auth-password').value = '';
+            const fresh = await fetch('/api/auth/status').then(r => r.json());
+            setAuthDot('ok', fresh.username || 'Verbonden');
+            refreshAuthSidebarDisplay(fresh);
+            showToast('Ingelogd bij Jumbo', 'success');
+        }
+    } catch (e) {
+        setAuthDot('offline', 'Inloggen mislukt');
+        if (errEl) { errEl.textContent = e.message || 'Inloggen mislukt'; errEl.style.display = 'block'; }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Inloggen'; }
+    }
+};
+
+// Logout
+window.doJumboLogout = async function() {
+    try {
+        await apiRequest('/auth/logout', { method: 'POST' });
+        setAuthDot('offline', 'Niet ingelogd');
+        const status = { isAuthenticated: false, hasSavedCredentials: false };
+        refreshAuthSidebarDisplay(status);
+        showToast('Uitgelogd', 'info', 2000);
+    } catch (e) { /* handled by apiRequest */ }
+};

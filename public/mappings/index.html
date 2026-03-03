@@ -1,28 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappings - Grocies</title>
+    <title>Koppelingen - Grocies</title>
     <link rel="stylesheet" href="/shared/common.css">
     <link rel="stylesheet" href="mappings.css">
 </head>
 <body>
     <div class="page-container">
         <div class="section-header">
-            <h1>Ingredient Mappings</h1>
-            <button class="btn btn-primary" onclick="openMappingForm()">Create Mapping</button>
+            <h1>Ingredi&euml;ntkoppelingen</h1>
+            <button class="btn btn-primary" onclick="openMappingForm()">Koppeling aanmaken</button>
         </div>
 
         <!-- Unmapped Alert -->
         <div id="unmapped-alert" class="unmapped-alert hidden mb-20">
             <span id="unmapped-count"></span>
-            <button class="btn btn-secondary btn-small" onclick="showUnmapped()">View Unmapped</button>
+            <button class="btn btn-secondary btn-small" onclick="showUnmapped()">Koppel ongekoppeld</button>
         </div>
+
+        <!-- Unmapped Ingredients List -->
+        <div id="unmapped-list" class="unmapped-list hidden mb-20"></div>
 
         <!-- Filter -->
         <div class="search-bar mb-20">
-            <input type="search" id="mapping-search" placeholder="Filter by ingredient name...">
+            <input type="search" id="mapping-search" placeholder="Zoek op ingredi&euml;ntnaam...">
         </div>
 
         <!-- Mappings Table -->
@@ -30,11 +33,11 @@
             <table class="data-table" id="mappings-table">
                 <thead>
                     <tr>
-                        <th>Ingredient</th>
+                        <th>Ingredi&euml;nt</th>
                         <th>Jumbo Product</th>
-                        <th>SKU</th>
-                        <th>Preferred</th>
-                        <th>Actions</th>
+                        <th>Verpakking</th>
+                        <th>Status</th>
+                        <th>Acties</th>
                     </tr>
                 </thead>
                 <tbody id="mappings-body"></tbody>
@@ -46,23 +49,26 @@
     <div id="mapping-form-modal" class="modal-overlay">
         <div class="modal" style="max-width:800px">
             <div class="modal-header">
-                <h2 id="mapping-form-title">Create Mapping</h2>
+                <h2 id="mapping-form-title">Koppeling aanmaken</h2>
                 <button class="btn-close" onclick="closeModal('mapping-form-modal')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="mapping-id">
 
                 <div class="form-group">
-                    <label>Ingredient Name</label>
-                    <input type="text" id="mapping-ingredient" placeholder="e.g. chicken breast" required>
+                    <label>Ingredi&euml;ntnaam</label>
+                    <input type="text" id="mapping-ingredient" placeholder="bijv. kipfilet" required>
                 </div>
+
+                <!-- Similar Mappings Suggestions -->
+                <div id="similar-mappings" class="similar-mappings hidden mb-10"></div>
 
                 <!-- Product Search -->
                 <div class="form-group">
-                    <label>Search Jumbo Product</label>
+                    <label>Zoek Jumbo Product</label>
                     <div class="search-bar">
-                        <input type="search" id="product-search" placeholder="Search products...">
-                        <button class="btn btn-secondary" onclick="searchJumboProducts()">Search</button>
+                        <input type="search" id="product-search" placeholder="Zoek producten...">
+                        <button class="btn btn-secondary" onclick="searchJumboProducts()">Zoeken</button>
                     </div>
                 </div>
 
@@ -71,23 +77,45 @@
 
                 <!-- Selected Product -->
                 <div id="selected-product" class="selected-product hidden">
-                    <h3 class="mb-10">Selected Product</h3>
+                    <h3 class="mb-10">Geselecteerd product</h3>
                     <div id="selected-product-info" class="selected-product-info"></div>
                     <input type="hidden" id="mapping-sku">
                     <input type="hidden" id="mapping-product-id">
                     <input type="hidden" id="mapping-product-details">
                 </div>
 
+                <!-- Package Info -->
+                <div style="display:flex;gap:10px;margin-top:10px">
+                    <div class="form-group" style="flex:1">
+                        <label>Verpakkingshoeveelheid</label>
+                        <input type="number" id="mapping-package-amount" placeholder="bijv. 500" step="any">
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Eenheid verpakking</label>
+                        <input type="text" id="mapping-package-unit" placeholder="bijv. g, ml, stuks">
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Houdbaarheid (dagen)</label>
+                        <input type="number" id="mapping-shelf-life" placeholder="bijv. 7">
+                    </div>
+                </div>
+
                 <div class="form-group checkbox mt-10">
                     <label>
                         <input type="checkbox" id="mapping-preferred" checked>
-                        Preferred mapping (used for shopping list)
+                        Voorkeurskoppeling (gebruikt voor boodschappenlijst)
+                    </label>
+                </div>
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" id="mapping-skip">
+                        Standaard overslaan in boodschappenlijst (bijv. kruiden, basisproducten)
                     </label>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('mapping-form-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveMapping()">Save Mapping</button>
+                <button class="btn btn-secondary" onclick="closeModal('mapping-form-modal')">Annuleren</button>
+                <button class="btn btn-primary" onclick="saveMapping()">Opslaan</button>
             </div>
         </div>
     </div>

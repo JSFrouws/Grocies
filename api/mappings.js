@@ -1,9 +1,66 @@
 const express = require('express');
 const router = express.Router();
 
-function setupMappingsRoutes(mappingService) {
+function setupMappingsRoutes(mappingService, llmService, getJumboClient) {
 
     // IMPORTANT: Specific routes MUST come before /:id to avoid matching
+
+    // POST /api/mappings/suggest - LLM-assisted Jumbo product suggestion for an ingredient
+    router.post('/suggest', async (req, res) => {
+        try {
+            const { ingredient_name } = req.body;
+            if (!ingredient_name) {
+                return res.status(400).json({ success: false, error: 'ingredient_name is required' });
+            }
+
+            // Search Jumbo for this ingredient
+            let products = [];
+            try {
+                const jumboClient = getJumboClient();
+                const result = await jumboClient.searchProducts(ingredient_name);
+                products = (result.searchProducts?.products || []).slice(0, 10).map(p => ({
+                    sku: p.id,
+                    title: p.title,
+                    subtitle: p.subtitle || '',
+                    price: p.prices?.price || 0,
+                    image: p.image || null,
+                    brand: p.brand || '',
+                    available: p.availability?.isAvailable || false
+                }));
+            } catch (e) {
+                console.error('Jumbo search error:', e.message);
+            }
+
+            if (products.length === 0) {
+                return res.json({ success: true, ingredient_name, products: [], suggestion: null, llmAvailable: false });
+            }
+
+            // LLM ranking
+            let suggestion = null;
+            let llmAvailable = false;
+            if (llmService) {
+                try {
+                    suggestion = await llmService.suggestProductMapping(ingredient_name, products);
+                    llmAvailable = true;
+                } catch (e) {
+                    console.error('LLM suggestion error:', e.message);
+                }
+            }
+
+            // Attach product details to each ranked suggestion
+            if (suggestion?.ranked) {
+                suggestion.ranked = suggestion.ranked.map(r => ({
+                    ...r,
+                    product: products.find(p => p.sku === r.sku) || null
+                }));
+            }
+
+            res.json({ success: true, ingredient_name, products, suggestion, llmAvailable });
+        } catch (error) {
+            console.error('Suggest mapping error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
 
     // GET /api/mappings/unmapped - Get unmapped ingredients in queue
     router.get('/unmapped', (req, res) => {

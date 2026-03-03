@@ -1,30 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Queue - Grocies</title>
+    <title>Wachtrij - Grocies</title>
     <link rel="stylesheet" href="/shared/common.css">
     <link rel="stylesheet" href="queue.css">
 </head>
 <body>
     <div class="page-container">
         <div class="section-header">
-            <h1>Meal Queue</h1>
+            <h1>Maaltijd Wachtrij</h1>
             <div style="display:flex;gap:10px">
-                <button class="btn btn-secondary" onclick="addRandomRecipe()">Add Random</button>
-                <a href="/shopping-list/" class="btn btn-primary">Shopping List</a>
+                <button class="btn btn-secondary" onclick="addRandomRecipe()">Willekeurig toevoegen</button>
+                <a href="/shopping-list/" class="btn btn-primary">Boodschappenlijst</a>
             </div>
         </div>
 
         <div id="queue-info" class="queue-info mb-20"></div>
+
+        <!-- Stock filter -->
+        <div class="stock-filter mb-20">
+            <label class="checkbox-label">
+                <input type="checkbox" id="stock-filter-checkbox" onchange="toggleStockFilter()">
+                Toon alleen recepten met ingredi&euml;nten uit voorraad
+            </label>
+        </div>
 
         <!-- Queue List -->
         <div id="queue-list" class="queue-list"></div>
 
         <!-- History -->
         <div class="mt-20">
-            <h2 style="margin-bottom:16px">Recent History</h2>
+            <h2 style="margin-bottom:16px">Recente geschiedenis</h2>
             <div id="history-list"></div>
         </div>
     </div>

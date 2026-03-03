@@ -1,57 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping List - Grocies</title>
+    <title>Boodschappenlijst - Grocies</title>
     <link rel="stylesheet" href="/shared/common.css">
+    <link rel="stylesheet" href="/mappings/mappings.css">
     <link rel="stylesheet" href="shopping-list.css">
 </head>
 <body>
     <div class="page-container">
         <div class="section-header">
-            <h1>Shopping List</h1>
+            <h1>Boodschappenlijst</h1>
             <div style="display:flex;gap:10px">
-                <button class="btn btn-secondary" onclick="exportAsText()">Export Text</button>
-                <button class="btn btn-primary" id="add-to-basket-btn" onclick="addAllToBasket()">Add to Basket</button>
+                <button class="btn btn-secondary" onclick="exportAsText()">Exporteer tekst</button>
+                <button class="btn btn-primary" id="add-to-basket-btn" onclick="addSelectedToBasket()">Geselecteerde toevoegen</button>
             </div>
         </div>
 
         <!-- Summary -->
         <div id="summary" class="summary-bar mb-20"></div>
 
-        <!-- Recipes in Queue -->
-        <div id="recipes-in-list" class="mb-20"></div>
-
-        <!-- Mapped Items -->
-        <div id="mapped-section" class="mb-20">
-            <h2 class="mb-10">Mapped Ingredients</h2>
-            <div id="mapped-items"></div>
+        <!-- View Toggle -->
+        <div class="view-toggle mb-20">
+            <button class="btn btn-secondary btn-small active" id="view-recipe-btn" onclick="switchView('recipe')">Per recept</button>
+            <button class="btn btn-secondary btn-small" id="view-category-btn" onclick="switchView('category')">Per categorie</button>
         </div>
+
+        <!-- By Recipe View -->
+        <div id="recipe-view"></div>
+
+        <!-- By Category View (hidden by default) -->
+        <div id="category-view" class="hidden"></div>
 
         <!-- Unmapped Items -->
         <div id="unmapped-section" class="mb-20 hidden">
-            <h2 class="mb-10">Unmapped Ingredients</h2>
-            <p class="text-muted mb-10">These ingredients need to be mapped to Jumbo products before they can be added to your basket.</p>
+            <h2 class="mb-10">Niet-gekoppelde ingredi&euml;nten</h2>
+            <p class="text-muted mb-10">Deze ingredi&euml;nten moeten eerst gekoppeld worden aan een Jumbo product.</p>
             <div id="unmapped-items"></div>
-            <a href="/mappings/" class="btn btn-secondary mt-10">Map Ingredients</a>
+            <a href="/mappings/" class="btn btn-secondary mt-10">Ingredi&euml;nten koppelen</a>
         </div>
 
         <!-- Progress Modal -->
         <div id="progress-modal" class="modal-overlay">
             <div class="modal" style="max-width:500px">
                 <div class="modal-header">
-                    <h2>Adding to Basket</h2>
+                    <h2>Toevoegen aan mandje</h2>
                 </div>
                 <div class="modal-body">
                     <div class="progress-bar-container">
                         <div class="progress-bar" id="progress-bar"></div>
                     </div>
-                    <p id="progress-text" class="text-center mt-10">Preparing...</p>
+                    <p id="progress-text" class="text-center mt-10">Voorbereiden...</p>
                     <div id="progress-results" class="mt-20 hidden"></div>
                 </div>
                 <div class="modal-footer hidden" id="progress-footer">
-                    <button class="btn btn-primary" onclick="closeModal('progress-modal')">Done</button>
+                    <button class="btn btn-primary" onclick="closeModal('progress-modal')">Klaar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alternative / Mapping Modal -->
+        <div id="mapping-form-modal" class="modal-overlay">
+            <div class="modal" style="max-width:800px">
+                <div class="modal-header">
+                    <h2 id="mapping-form-title">Alternatief kiezen</h2>
+                    <button class="btn-close" onclick="closeModal('mapping-form-modal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="mapping-id">
+
+                    <div class="form-group">
+                        <label>Ingredi&euml;ntnaam</label>
+                        <input type="text" id="mapping-ingredient" placeholder="bijv. kipfilet" required>
+                    </div>
+
+                    <!-- Similar Mappings Suggestions -->
+                    <div id="similar-mappings" class="similar-mappings hidden mb-10"></div>
+
+                    <!-- Product Search -->
+                    <div class="form-group">
+                        <label>Zoek Jumbo product</label>
+                        <div class="search-bar">
+                            <input type="search" id="product-search" placeholder="Zoek producten...">
+                            <button class="btn btn-secondary" onclick="searchJumboProducts()">Zoeken</button>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div id="product-results" class="product-results hidden"></div>
+
+                    <!-- Selected Product -->
+                    <div id="selected-product" class="selected-product hidden">
+                        <h3 class="mb-10">Geselecteerd product</h3>
+                        <div id="selected-product-info" class="selected-product-info"></div>
+                        <input type="hidden" id="mapping-sku">
+                        <input type="hidden" id="mapping-product-id">
+                        <input type="hidden" id="mapping-product-details">
+                    </div>
+
+                    <!-- Package fields -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" class="mt-10">
+                        <div class="form-group">
+                            <label>Verpakkingshoeveelheid</label>
+                            <input type="number" id="mapping-package-amount" placeholder="bijv. 500" step="any" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Eenheid verpakking</label>
+                            <input type="text" id="mapping-package-unit" placeholder="bijv. g, stuks, ml">
+                        </div>
+                        <div class="form-group">
+                            <label>Houdbaarheid (dagen)</label>
+                            <input type="number" id="mapping-shelf-life" placeholder="bijv. 7" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox mt-10">
+                        <label>
+                            <input type="checkbox" id="mapping-replace" checked>
+                            Koppeling vervangen (standaard product bijwerken)
+                        </label>
+                    </div>
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="mapping-skip">
+                            Standaard overslaan in boodschappenlijst
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal('mapping-form-modal')">Annuleren</button>
+                    <button class="btn btn-primary" onclick="saveMappingFromShoppingList()">Opslaan</button>
                 </div>
             </div>
         </div>

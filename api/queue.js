@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-function setupQueueRoutes(queueService) {
+function setupQueueRoutes(queueService, stockService) {
 
     // IMPORTANT: Specific routes MUST come before /:id to avoid matching
 
@@ -33,7 +33,7 @@ function setupQueueRoutes(queueService) {
     router.post('/random', (req, res) => {
         try {
             const avoidDays = req.body.avoidDays || 14;
-            const queueItem = queueService.addRandomRecipe(avoidDays);
+            const queueItem = queueService.addRandomRecipe(avoidDays, stockService);
             res.status(201).json({
                 success: true,
                 queueItem,
@@ -41,6 +41,21 @@ function setupQueueRoutes(queueService) {
             });
         } catch (error) {
             console.error('Add random recipe error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // PUT /api/queue/mark-bought - Mark recipes as ingredients bought
+    router.put('/mark-bought', (req, res) => {
+        try {
+            const { queueIds } = req.body;
+            if (!Array.isArray(queueIds) || queueIds.length === 0) {
+                return res.status(400).json({ success: false, error: 'queueIds must be a non-empty array' });
+            }
+            queueService.markIngredientsBought(queueIds);
+            res.json({ success: true, message: `Marked ${queueIds.length} recipes as bought` });
+        } catch (error) {
+            console.error('Mark bought error:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     });
@@ -89,7 +104,7 @@ function setupQueueRoutes(queueService) {
         try {
             const id = parseInt(req.params.id);
             const { rating, notes } = req.body;
-            const result = queueService.consumeRecipe(id, rating, notes);
+            const result = queueService.consumeRecipe(id, rating, notes, stockService);
 
             if (!result) {
                 return res.status(404).json({ success: false, error: 'Queue item not found' });

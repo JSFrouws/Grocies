@@ -14,6 +14,97 @@
     overflow-x: auto;
 }
 
+/* Unmapped Ingredients List */
+.unmapped-list {
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.unmapped-ingredient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.unmapped-ingredient-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.unmapped-ingredient-item:hover {
+    border-color: var(--neon-green);
+    background: rgba(253, 195, 0, 0.08);
+}
+
+.unmapped-ingredient-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.unmapped-ingredient-details {
+    font-size: 12px;
+}
+
+/* Similar Mappings */
+.similar-mappings {
+    border: 1px solid rgba(253, 195, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    background: rgba(253, 195, 0, 0.05);
+}
+
+.similar-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--neon-green);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.similar-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 10px;
+}
+
+.similar-item:last-child {
+    border-bottom: none;
+}
+
+.similar-item-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+}
+
+.similar-ingredient {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* Status tag for skip */
+.tag-muted {
+    background: rgba(55, 63, 67, 0.08);
+    color: var(--text-muted);
+    border-color: rgba(55, 63, 67, 0.15);
+}
+
 /* Product Search Results in Modal */
 .product-results {
     max-height: 300px;
@@ -38,7 +129,7 @@
 }
 
 .product-result-item:hover {
-    background: rgba(24, 180, 89, 0.1);
+    background: rgba(253, 195, 0, 0.1);
 }
 
 .product-result-image {

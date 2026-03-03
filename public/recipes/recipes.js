@@ -1,6 +1,7 @@
-// Recipes page logic
+// Recepten pagina logica
 let allRecipes = [];
 let generationCountries = [];
+let existingIngredients = [];
 
 // Load recipes
 async function loadRecipes() {
@@ -23,7 +24,7 @@ async function loadRecipes() {
 function renderRecipeGrid() {
     const grid = document.getElementById('recipe-grid');
     if (allRecipes.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127858;</div><p>No recipes yet</p><button class="btn btn-primary" onclick="openRecipeForm()">Create your first recipe</button></div>';
+        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127858;</div><p>Nog geen recepten</p><button class="btn btn-primary" onclick="openRecipeForm()">Maak je eerste recept</button></div>';
         return;
     }
 
@@ -76,7 +77,7 @@ async function loadGenerationCountries() {
         const data = await apiRequest('/recipes/meta/generation-countries');
         generationCountries = data.countries || [];
         const select = document.getElementById('generate-country');
-        select.innerHTML = '<option value="">Select a country...</option>' +
+        select.innerHTML = '<option value="">Selecteer een land...</option>' +
             generationCountries.map(c => `<option value="${c}">${c}</option>`).join('');
     } catch (e) { /* handled */ }
 }
@@ -90,7 +91,7 @@ document.getElementById('country-filter').addEventListener('change', loadRecipes
 // Recipe Form
 // =====================
 function openRecipeForm(recipe = null) {
-    document.getElementById('form-title').textContent = (recipe && recipe.id) ? 'Edit Recipe' : 'Create Recipe';
+    document.getElementById('form-title').textContent = (recipe && recipe.id) ? 'Recept bewerken' : 'Recept aanmaken';
     document.getElementById('recipe-id').value = (recipe && recipe.id) ? recipe.id : '';
     document.getElementById('recipe-name').value = recipe ? recipe.name : '';
     document.getElementById('recipe-cuisine').value = recipe ? (recipe.cuisine || '') : '';
@@ -133,12 +134,58 @@ function addIngredientRow(ing = null) {
     const row = document.createElement('div');
     row.className = 'ingredient-row';
     row.innerHTML = `
-        <input type="text" placeholder="Ingredient" class="ing-name" value="${ing ? escapeHtml(ing.name) : ''}" required>
-        <input type="text" placeholder="Amount" class="ing-amount" value="${ing ? ing.amount : ''}">
-        <input type="text" placeholder="Unit" class="ing-unit" value="${ing ? (ing.unit || '') : ''}">
+        <div class="ing-name-wrapper">
+            <input type="text" placeholder="Ingredi\u00EBnt" class="ing-name" value="${ing ? escapeHtml(ing.name) : ''}" required autocomplete="off">
+            <div class="ing-autocomplete hidden"></div>
+        </div>
+        <input type="text" placeholder="Hoeveelheid" class="ing-amount" value="${ing ? ing.amount : ''}">
+        <input type="text" placeholder="Eenheid" class="ing-unit" value="${ing ? (ing.unit || '') : ''}">
         <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="border-color:var(--error);color:var(--error)">&times;</button>
     `;
     list.appendChild(row);
+
+    const nameInput = row.querySelector('.ing-name');
+    const dropdown = row.querySelector('.ing-autocomplete');
+    setupIngredientAutocomplete(nameInput, dropdown);
+}
+
+function setupIngredientAutocomplete(input, dropdown) {
+    input.addEventListener('input', () => {
+        const val = input.value.trim().toLowerCase();
+        if (val.length < 1) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+        const matches = existingIngredients.filter(name => name.includes(val)).slice(0, 8);
+        if (matches.length === 0) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+        dropdown.classList.remove('hidden');
+        dropdown.innerHTML = matches.map(m =>
+            `<div class="ing-autocomplete-item">${escapeHtml(m)}</div>`
+        ).join('');
+        dropdown.querySelectorAll('.ing-autocomplete-item').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                input.value = item.textContent;
+                dropdown.classList.add('hidden');
+            });
+        });
+    });
+    input.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.add('hidden'), 150);
+    });
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') dropdown.classList.add('hidden');
+    });
+}
+
+async function loadExistingIngredients() {
+    try {
+        const data = await apiRequest('/recipes/meta/ingredients');
+        existingIngredients = data.ingredients || [];
+    } catch (e) { /* handled */ }
 }
 
 async function saveRecipe() {
@@ -147,7 +194,7 @@ async function saveRecipe() {
     const instructions = document.getElementById('recipe-instructions').value.trim();
 
     if (!name || !instructions) {
-        showToast('Name and instructions are required', 'error');
+        showToast('Naam en bereidingswijze zijn verplicht', 'error');
         return;
     }
 
@@ -162,7 +209,7 @@ async function saveRecipe() {
     });
 
     if (ingredients.length === 0) {
-        showToast('Add at least one ingredient', 'error');
+        showToast('Voeg minimaal \u00E9\u00E9n ingredi\u00EBnt toe', 'error');
         return;
     }
 
@@ -189,14 +236,14 @@ async function saveRecipe() {
                 method: 'PUT',
                 body: JSON.stringify(recipeData)
             });
-            showToast('Recipe updated', 'success');
+            showToast('Recept bijgewerkt', 'success');
         } else {
             const result = await apiRequest('/recipes', {
                 method: 'POST',
                 body: JSON.stringify(recipeData)
             });
             recipeId = result.recipe?.id;
-            showToast('Recipe created', 'success');
+            showToast('Recept aangemaakt', 'success');
         }
 
         // Upload image if selected
@@ -237,18 +284,18 @@ async function viewRecipe(id) {
                 ${r.cuisine ? `<span class="tag">${escapeHtml(r.cuisine)}</span>` : ''}
                 ${r.country_of_origin ? `<span class="tag">${escapeHtml(r.country_of_origin)}</span>` : ''}
                 ${totalTime ? `<span class="tag">${formatTime(totalTime)}</span>` : ''}
-                <span class="tag">${r.servings} servings</span>
+                <span class="tag">${r.servings} porties</span>
             </div>
-            <h3 style="margin:16px 0 8px">Ingredients</h3>
+            <h3 style="margin:16px 0 8px">Ingredi\u00EBnten</h3>
             <ul class="detail-ingredients">${ingredientsList}</ul>
-            <h3 style="margin:16px 0 8px">Instructions</h3>
+            <h3 style="margin:16px 0 8px">Bereidingswijze</h3>
             <div class="detail-instructions">${escapeHtml(r.instructions).replace(/\n/g, '<br>')}</div>
         `;
 
         document.getElementById('detail-footer').innerHTML = `
-            <button class="btn btn-secondary" onclick="addToQueue(${r.id})">Add to Queue</button>
-            <button class="btn btn-secondary" onclick="closeModal('recipe-detail-modal');openRecipeForm(${JSON.stringify(r).replace(/"/g, '&quot;')})">Edit</button>
-            <button class="btn btn-danger" onclick="deleteRecipe(${r.id})">Delete</button>
+            <button class="btn btn-secondary" onclick="addToQueue(${r.id})">Aan wachtrij toevoegen</button>
+            <button class="btn btn-secondary" onclick="closeModal('recipe-detail-modal');openRecipeForm(${JSON.stringify(r).replace(/"/g, '&quot;')})">Bewerken</button>
+            <button class="btn btn-danger" onclick="deleteRecipe(${r.id})">Verwijderen</button>
         `;
 
         openModal('recipe-detail-modal');
@@ -260,27 +307,21 @@ window.viewRecipe = viewRecipe;
 async function addToQueue(recipeId) {
     try {
         const data = await apiRequest(`/queue/add/${recipeId}`, { method: 'POST' });
-        showToast(`Added "${data.queueItem.name}" to queue`, 'success');
+        showToast(`"${data.queueItem.name}" toegevoegd aan wachtrij`, 'success');
         updateQueueBadge();
         closeModal('recipe-detail-modal');
     } catch (e) { /* handled */ }
 }
 
 async function deleteRecipe(id) {
-    if (!confirm('Delete this recipe?')) return;
+    if (!confirm('Dit recept verwijderen?')) return;
     try {
         await apiRequest(`/recipes/${id}`, { method: 'DELETE' });
-        showToast('Recipe deleted', 'success');
+        showToast('Recept verwijderd', 'success');
         closeModal('recipe-detail-modal');
         loadRecipes();
     } catch (e) { /* handled */ }
 }
-
-// =====================
-// Image Upload
-// =====================
-// We handle image uploads after recipe creation via a separate call
-// For now, the form works without image upload; can be added later
 
 // =====================
 // Generate Recipe (LLM)
@@ -301,7 +342,7 @@ function randomCountry() {
 async function generateRecipe() {
     const country = document.getElementById('generate-country').value;
     if (!country) {
-        showToast('Select a country first', 'error');
+        showToast('Selecteer eerst een land', 'error');
         return;
     }
 
@@ -310,7 +351,7 @@ async function generateRecipe() {
     const rawEl = document.getElementById('generate-raw');
     statusEl.classList.remove('hidden');
     rawEl.classList.add('hidden');
-    document.getElementById('generate-status-text').textContent = `Generating recipe from ${country}...`;
+    document.getElementById('generate-status-text').textContent = `Recept genereren uit ${country}...`;
 
     try {
         const instructions = document.getElementById('generate-instructions').value.trim();
@@ -324,12 +365,11 @@ async function generateRecipe() {
         if (data.success && data.recipe) {
             closeModal('generate-modal');
             openRecipeForm(data.recipe);
-            showToast(`Generated: ${data.recipe.name}`, 'success');
+            showToast(`Gegenereerd: ${data.recipe.name}`, 'success');
         } else {
-            // Show raw response
             rawEl.classList.remove('hidden');
-            document.getElementById('generate-raw-text').value = data.raw || data.error || 'No response';
-            showToast('Failed to parse recipe. See raw response below.', 'error');
+            document.getElementById('generate-raw-text').value = data.raw || data.error || 'Geen respons';
+            showToast('Recept verwerken mislukt. Zie ruwe respons hieronder.', 'error');
         }
     } catch (e) {
         statusEl.classList.add('hidden');
@@ -343,7 +383,7 @@ async function generateRecipe() {
 function copyRaw() {
     const text = document.getElementById('generate-raw-text').value;
     navigator.clipboard.writeText(text).then(() => {
-        showToast('Copied to clipboard', 'success', 2000);
+        showToast('Gekopieerd naar klembord', 'success', 2000);
     });
 }
 
@@ -373,4 +413,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRecipes();
     loadFilters();
     loadGenerationCountries();
+    loadExistingIngredients();
 });

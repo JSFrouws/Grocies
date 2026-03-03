@@ -82,8 +82,13 @@
     align-items: center;
 }
 
-.ingredient-row .ing-name {
+.ingredient-row .ing-name-wrapper {
     flex: 2;
+    position: relative;
+}
+
+.ingredient-row .ing-name {
+    width: 100%;
 }
 
 .ingredient-row .ing-amount {
@@ -94,6 +99,33 @@
 .ingredient-row .ing-unit {
     flex: 1;
     max-width: 80px;
+}
+
+/* Ingredient Autocomplete */
+.ing-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.ing-autocomplete-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.ing-autocomplete-item:hover {
+    background: rgba(253, 195, 0, 0.15);
+    color: var(--spierings-orange);
 }
 
 /* Detail Modal */

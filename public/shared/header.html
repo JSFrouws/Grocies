@@ -1,18 +1,39 @@
+<!-- SVG ClipPaths for Spierings-style shapes (REQUIRED) -->
+<svg width="0" height="0" style="position: absolute;">
+    <defs>
+        <clipPath id="header-brand-shape" clipPathUnits="objectBoundingBox">
+            <path d="M 0 1 L 0 0 L 0.975 0 Q 1 0, 1 0.12 L 1 0.3 L 0.86 1 Z" />
+        </clipPath>
+        <clipPath id="btn-left-shape" clipPathUnits="objectBoundingBox">
+            <path d="M 1 0 L 0 0.7 L 0 0.80 Q 0 1, 0.20 1 L 1 1 Z" />
+        </clipPath>
+        <clipPath id="btn-right-shape" clipPathUnits="objectBoundingBox">
+            <path d="M 0 0 L 0.80 0 Q 1 0, 1 0.20 L 1 0.3 L 0 1 Z" />
+        </clipPath>
+    </defs>
+</svg>
+
 <header class="main-header">
     <div class="logo"><a href="/">Grocies</a></div>
     <nav>
-        <a href="/store/">Store</a>
-        <a href="/recipes/">Recipes</a>
+        <a href="/store/">Winkel</a>
+        <a href="/recipes/">Recepten</a>
         <a href="/queue/" class="badge-container">
-            Queue
+            Wachtrij
             <span class="badge hidden" id="queue-count">0</span>
         </a>
-        <a href="/mappings/">Mappings</a>
-        <a href="/shopping-list/">Shopping List</a>
+        <a href="/mappings/">Koppelingen</a>
+        <a href="/voorraad/">Voorraad</a>
+        <a href="/shopping-list/">Boodschappen</a>
     </nav>
     <div class="user-actions">
+        <!-- Connection status dot — click to open auth sidebar -->
+        <button id="auth-dot-btn" class="auth-dot-btn" title="Jumbo verbinding" onclick="openAuthSidebar()">
+            <span id="auth-dot" class="auth-dot auth-dot--checking">●</span>
+            <span id="auth-dot-label" class="auth-dot-label">…</span>
+        </button>
         <button id="basket-btn" class="btn btn-secondary btn-small badge-container">
-            Basket
+            Mandje
             <span class="badge hidden" id="basket-count">0</span>
         </button>
     </div>
@@ -22,8 +43,62 @@
 <div id="basket-overlay" class="basket-overlay"></div>
 <div id="basket-sidebar" class="basket-sidebar">
     <div class="basket-sidebar-header">
-        <h2>Basket</h2>
+        <h2>Mandje</h2>
         <button id="close-basket-btn" class="btn-close">&times;</button>
     </div>
     <div id="basket-content" class="basket-sidebar-content"></div>
+</div>
+
+<!-- Auth / Connection Sidebar -->
+<div id="auth-overlay" class="basket-overlay"></div>
+<div id="auth-sidebar" class="basket-sidebar">
+    <div class="basket-sidebar-header">
+        <h2>Jumbo verbinding</h2>
+        <button id="close-auth-btn" class="btn-close">&times;</button>
+    </div>
+    <div id="auth-sidebar-content" class="basket-sidebar-content">
+
+        <!-- Status block (always visible) -->
+        <div id="auth-status-block" style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="auth-sidebar-dot" class="auth-dot auth-dot--checking" style="font-size:1.2rem;">●</span>
+                <span id="auth-sidebar-status-text" style="font-weight:600;">Controleren…</span>
+            </div>
+            <div id="auth-sidebar-user" style="font-size:0.85rem;color:var(--text-secondary,#666);"></div>
+            <div id="auth-sidebar-age" style="font-size:0.8rem;color:var(--text-secondary,#666);margin-top:4px;"></div>
+        </div>
+
+        <!-- Login form (shown when not logged in) -->
+        <div id="auth-login-section" style="display:none;">
+            <p style="font-size:0.85rem;margin-bottom:12px;">Log in met je Jumbo-account. Je gegevens worden lokaal opgeslagen voor automatisch herverbinden.</p>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">E-mailadres</label>
+                <input type="email" id="auth-email" placeholder="jouw@email.nl"
+                    style="width:100%;padding:8px;border:1px solid var(--border,#ddd);border-radius:6px;box-sizing:border-box;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Wachtwoord</label>
+                <input type="password" id="auth-password" placeholder="Wachtwoord"
+                    style="width:100%;padding:8px;border:1px solid var(--border,#ddd);border-radius:6px;box-sizing:border-box;">
+            </div>
+            <button class="btn btn-primary" id="auth-login-btn" onclick="doJumboLogin()" style="width:100%;">
+                Inloggen
+            </button>
+            <div id="auth-login-error" style="color:var(--error,red);font-size:0.8rem;margin-top:8px;display:none;"></div>
+        </div>
+
+        <!-- Logged-in controls (shown when authenticated) -->
+        <div id="auth-loggedin-section" style="display:none;">
+            <button class="btn btn-secondary" onclick="doJumboLogout()" style="width:100%;margin-top:4px;">
+                Uitloggen &amp; opgeslagen gegevens wissen
+            </button>
+        </div>
+
+        <!-- Re-login spinner (shown during background re-auth) -->
+        <div id="auth-relogin-section" style="display:none;text-align:center;padding:12px 0;">
+            <div class="spinner" style="display:inline-block;margin-bottom:8px;"></div>
+            <div style="font-size:0.85rem;">Herverbinden met Jumbo…</div>
+        </div>
+
+    </div>
 </div>

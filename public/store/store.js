@@ -1,4 +1,4 @@
-// Store page logic
+// Winkel pagina logica
 const loginSection = document.getElementById('login-section');
 const storeSection = document.getElementById('store-section');
 const loginForm = document.getElementById('login-form');
@@ -31,7 +31,7 @@ function showLoginSection() {
 function showStoreSection(email) {
     loginSection.classList.add('hidden');
     storeSection.classList.remove('hidden');
-    if (userInfo) userInfo.textContent = email ? `Logged in as ${email}` : '';
+    if (userInfo) userInfo.textContent = email ? `Ingelogd als ${email}` : '';
 }
 
 // Login
@@ -43,8 +43,8 @@ loginForm.addEventListener('submit', async (e) => {
 
     loginBtn.disabled = true;
     loginBtn.querySelector('.spinner').classList.remove('hidden');
-    loginBtn.querySelector('.btn-text').textContent = 'Logging in...';
-    showLoading('Logging in via browser... This may take a moment');
+    loginBtn.querySelector('.btn-text').textContent = 'Inloggen...';
+    showLoading('Inloggen via browser... Dit kan even duren');
 
     try {
         const data = await apiRequest('/auth/login', {
@@ -54,27 +54,26 @@ loginForm.addEventListener('submit', async (e) => {
 
         hideLoading();
         if (data.success) {
-            showToast('Login successful!', 'success');
+            showToast('Succesvol ingelogd!', 'success');
             showStoreSection(username);
         } else {
-            showToast(data.error || 'Login failed', 'error');
+            showToast(data.error || 'Inloggen mislukt', 'error');
         }
     } catch (error) {
         hideLoading();
-        // apiRequest already shows toast
     } finally {
         loginBtn.disabled = false;
         loginBtn.querySelector('.spinner').classList.add('hidden');
-        loginBtn.querySelector('.btn-text').textContent = 'Login';
+        loginBtn.querySelector('.btn-text').textContent = 'Inloggen';
     }
 });
 
 // Logout
 logoutBtn.addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to logout?')) return;
+    if (!confirm('Weet je zeker dat je wilt uitloggen?')) return;
     try {
         await apiRequest('/auth/logout', { method: 'POST' });
-        showToast('Logged out', 'success');
+        showToast('Uitgelogd', 'success');
         showLoginSection();
     } catch (e) { /* handled */ }
 });
@@ -82,13 +81,13 @@ logoutBtn.addEventListener('click', async () => {
 // Search
 async function searchProducts(query) {
     if (!query.trim()) return;
-    showToast('Searching...', 'info', 2000);
+    showToast('Zoeken...', 'info', 2000);
 
     try {
         const data = await apiRequest(`/store/search?q=${encodeURIComponent(query)}&limit=20`);
         if (data.success) {
             displayProducts(data.products);
-            showToast(`${data.products.length} products found`, 'success', 2000);
+            showToast(`${data.products.length} producten gevonden`, 'success', 2000);
         }
     } catch (e) { /* handled */ }
 }
@@ -104,13 +103,13 @@ searchInput.addEventListener('keydown', (e) => {
 // Display products
 function displayProducts(products) {
     if (!products || products.length === 0) {
-        productsGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128269;</div><p>No products found</p></div>';
+        productsGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128269;</div><p>Geen producten gevonden</p></div>';
         return;
     }
 
     productsGrid.innerHTML = products.map(p => `
         <div class="product-card">
-            ${p.image ? `<img src="${p.image}" alt="${escapeHtml(p.title)}" class="product-image">` : '<div class="product-image" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted)">No Image</div>'}
+            ${p.image ? `<img src="${p.image}" alt="${escapeHtml(p.title)}" class="product-image">` : '<div class="product-image" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted)">Geen afbeelding</div>'}
             <div class="product-title">${escapeHtml(p.title)}</div>
             <div class="product-price">\u20AC${(p.price / 100).toFixed(2)}</div>
             <div class="product-sku">SKU: ${p.sku}</div>
@@ -120,7 +119,7 @@ function displayProducts(products) {
                     <input type="number" class="qty-input" value="1" min="1" max="99" id="qty-${p.sku}">
                     <button class="qty-btn" onclick="adjustQty('${p.sku}', 1)">+</button>
                 </div>
-                <button class="btn btn-primary btn-small" onclick="addProductToBasket('${p.sku}', '${escapeHtml(p.title).replace(/'/g, "\\'")}')">Add</button>
+                <button class="btn btn-primary btn-small" onclick="addProductToBasket('${p.sku}', '${escapeHtml(p.title).replace(/'/g, "\\'")}')">Toevoegen</button>
             </div>
         </div>
     `).join('');
@@ -144,7 +143,7 @@ window.addProductToBasket = async function(sku, title) {
             body: JSON.stringify({ sku, quantity })
         });
         if (data.success) {
-            showToast(`${quantity}x "${title}" added to basket`, 'success');
+            showToast(`${quantity}x "${title}" toegevoegd aan mandje`, 'success');
             updateBasketBadge(data.itemCount || 0);
         }
     } catch (e) { /* handled */ }

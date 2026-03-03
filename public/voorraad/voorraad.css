@@ -1,0 +1,119 @@
+/* Voorraad (Stock/Inventory) specific styles */
+
+.expired-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: rgba(211, 47, 47, 0.1);
+    border: 1px solid rgba(211, 47, 47, 0.3);
+    border-radius: 8px;
+    color: var(--color-error);
+    font-weight: 600;
+}
+
+.stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stock-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+}
+
+.stock-item.warning {
+    border-color: var(--color-warning);
+    background: rgba(245, 124, 0, 0.05);
+}
+
+.stock-item.expired {
+    border-color: var(--color-error);
+    background: rgba(211, 47, 47, 0.05);
+}
+
+.stock-item.expired .stock-item-name,
+.stock-item.expired .stock-item-qty {
+    color: var(--color-error);
+}
+
+.stock-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stock-item-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.stock-item-qty {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.stock-item-expiry {
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 100px;
+}
+
+.stock-item-expiry.warning {
+    color: var(--color-warning);
+    font-weight: 600;
+}
+
+.stock-item-expiry.expired {
+    color: var(--color-error);
+    font-weight: 700;
+}
+
+.stock-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-gft {
+    background: var(--color-error);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.btn-gft::before,
+.btn-gft::after {
+    display: none;
+}
+
+.btn-gft:hover {
+    background: #b71c1c;
+}
+
+.stock-group {
+    margin-bottom: 16px;
+}
+
+.stock-group-header {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+}

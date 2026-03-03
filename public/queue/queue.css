@@ -123,6 +123,51 @@
     color: var(--text-muted);
 }
 
+/* Stock Filter */
+.stock-filter {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--neon-green);
+    cursor: pointer;
+}
+
+/* Stock Badges */
+.stock-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.stock-badge.full {
+    background: rgba(46, 125, 50, 0.15);
+    color: var(--color-success);
+}
+
+.stock-badge.partial {
+    background: rgba(253, 195, 0, 0.15);
+    color: var(--spierings-orange);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .queue-item {

@@ -31,11 +31,18 @@ function setupShoppingListRoutes(shoppingListService, authService, getJumboClien
     router.post('/generate', authService.requireAuth(), async (req, res) => {
         try {
             const shoppingList = shoppingListService.generateShoppingList();
+            const { selectedSkus } = req.body || {};
 
-            if (shoppingList.mappedItems.length === 0) {
+            // Filter mapped items to only selected ones (if provided)
+            let itemsToAdd = shoppingList.mappedItems;
+            if (selectedSkus && Array.isArray(selectedSkus)) {
+                itemsToAdd = itemsToAdd.filter(item => selectedSkus.includes(item.jumboSku));
+            }
+
+            if (itemsToAdd.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    error: 'No mapped items to add to basket',
+                    error: 'No items selected to add to basket',
                     unmappedCount: shoppingList.unmappedItems.length
                 });
             }
@@ -43,11 +50,10 @@ function setupShoppingListRoutes(shoppingListService, authService, getJumboClien
             const jumboClient = getJumboClient();
             const customerId = authService.getCustomerId();
 
-            // Add items to basket
             const results = await shoppingListService.addToJumboBasket(
                 jumboClient,
                 customerId,
-                shoppingList.mappedItems
+                itemsToAdd
             );
 
             res.json({

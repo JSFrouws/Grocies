@@ -65,6 +65,17 @@ function setupRecipeRoutes(recipeService, llmService) {
         }
     });
 
+    // GET /api/recipes/meta/ingredients - Get distinct ingredient names
+    router.get('/meta/ingredients', (req, res) => {
+        try {
+            const ingredients = recipeService.getDistinctIngredients();
+            res.json({ success: true, ingredients });
+        } catch (error) {
+            console.error('Error fetching ingredients:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
     // GET /api/recipes/meta/generation-countries - Get countries for generation
     router.get('/meta/generation-countries', (req, res) => {
         try {
@@ -96,7 +107,8 @@ function setupRecipeRoutes(recipeService, llmService) {
                 });
             }
 
-            const result = await llmService.generateRecipe(country, instructions);
+            const existingIngredients = recipeService.getDistinctIngredients();
+            const result = await llmService.generateRecipe(country, instructions, existingIngredients);
             res.json(result);
         } catch (error) {
             console.error('Error generating recipe:', error);

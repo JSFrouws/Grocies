@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipes - Grocies</title>
+    <title>Recepten - Grocies</title>
     <link rel="stylesheet" href="/shared/common.css">
     <link rel="stylesheet" href="recipes.css">
 </head>
 <body>
     <div class="page-container">
         <div class="section-header">
-            <h1>Recipes</h1>
+            <h1>Recepten</h1>
             <div style="display:flex;gap:10px">
-                <button class="btn btn-secondary" onclick="openGenerateModal()">Generate Recipe</button>
-                <button class="btn btn-primary" onclick="openRecipeForm()">Create Recipe</button>
+                <button class="btn btn-secondary" onclick="openGenerateModal()">Recept genereren</button>
+                <button class="btn btn-primary" onclick="openRecipeForm()">Recept aanmaken</button>
             </div>
         </div>
 
         <!-- Filters -->
         <div class="filters-bar mb-20">
-            <input type="search" id="recipe-search" placeholder="Search recipes..." class="filter-input">
+            <input type="search" id="recipe-search" placeholder="Zoek recepten..." class="filter-input">
             <select id="cuisine-filter" class="filter-select">
-                <option value="">All Cuisines</option>
+                <option value="">Alle keukens</option>
             </select>
             <select id="country-filter" class="filter-select">
-                <option value="">All Countries</option>
+                <option value="">Alle landen</option>
             </select>
         </div>
 
@@ -36,7 +36,7 @@
     <div id="recipe-form-modal" class="modal-overlay">
         <div class="modal" style="max-width:800px">
             <div class="modal-header">
-                <h2 id="form-title">Create Recipe</h2>
+                <h2 id="form-title">Recept aanmaken</h2>
                 <button class="btn-close" onclick="closeModal('recipe-form-modal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -44,51 +44,51 @@
                     <input type="hidden" id="recipe-id">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
                         <div class="form-group">
-                            <label>Name *</label>
+                            <label>Naam *</label>
                             <input type="text" id="recipe-name" required>
                         </div>
                         <div class="form-group">
-                            <label>Cuisine</label>
-                            <input type="text" id="recipe-cuisine" placeholder="e.g. Italian">
+                            <label>Keuken</label>
+                            <input type="text" id="recipe-cuisine" placeholder="bijv. Italiaans">
                         </div>
                         <div class="form-group">
-                            <label>Country of Origin</label>
-                            <input type="text" id="recipe-country" placeholder="e.g. Italy">
+                            <label>Land van herkomst</label>
+                            <input type="text" id="recipe-country" placeholder="bijv. Itali&euml;">
                         </div>
                         <div class="form-group">
-                            <label>Servings</label>
+                            <label>Porties</label>
                             <input type="number" id="recipe-servings" value="4" min="1" max="20">
                         </div>
                         <div class="form-group">
-                            <label>Prep Time (min)</label>
+                            <label>Bereidingstijd (min)</label>
                             <input type="number" id="recipe-prep" min="0">
                         </div>
                         <div class="form-group">
-                            <label>Cook Time (min)</label>
+                            <label>Kooktijd (min)</label>
                             <input type="number" id="recipe-cook" min="0">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Tags (comma-separated)</label>
-                        <input type="text" id="recipe-tags" placeholder="e.g. quick, healthy, vegetarian">
+                        <label>Tags (kommagescheiden)</label>
+                        <input type="text" id="recipe-tags" placeholder="bijv. snel, gezond, vegetarisch">
                     </div>
 
                     <div class="form-group">
-                        <label>Frequency Weight</label>
+                        <label>Frequentiegewicht</label>
                         <div style="display:flex;align-items:center;gap:10px">
                             <input type="range" id="recipe-weight" min="0.5" max="2.0" step="0.1" value="1.0"
                                    style="flex:1" oninput="document.getElementById('weight-val').textContent=this.value">
                             <span id="weight-val" style="min-width:30px">1.0</span>
                         </div>
-                        <small class="text-muted">Higher = more likely to be randomly selected</small>
+                        <small class="text-muted">Hoger = vaker willekeurig geselecteerd</small>
                     </div>
 
                     <!-- Image Upload -->
                     <div class="form-group">
-                        <label>Recipe Image</label>
+                        <label>Afbeelding</label>
                         <input type="file" id="recipe-image" accept="image/jpeg,image/png,image/webp">
-                        <small class="text-muted">Max 5MB. JPG, PNG, or WebP.</small>
+                        <small class="text-muted">Max 5MB. JPG, PNG of WebP.</small>
                         <div id="image-preview" class="hidden" style="margin-top:8px">
                             <img id="image-preview-img" style="max-width:200px;border-radius:8px">
                         </div>
@@ -96,21 +96,21 @@
 
                     <!-- Ingredients -->
                     <div class="form-group">
-                        <label>Ingredients *</label>
+                        <label>Ingredi&euml;nten *</label>
                         <div id="ingredients-list"></div>
-                        <button type="button" class="btn btn-secondary btn-small mt-10" onclick="addIngredientRow()">+ Add Ingredient</button>
+                        <button type="button" class="btn btn-secondary btn-small mt-10" onclick="addIngredientRow()">+ Ingredi&euml;nt toevoegen</button>
                     </div>
 
                     <!-- Instructions -->
                     <div class="form-group">
-                        <label>Instructions *</label>
-                        <textarea id="recipe-instructions" rows="6" required placeholder="Step-by-step cooking instructions..."></textarea>
+                        <label>Bereidingswijze *</label>
+                        <textarea id="recipe-instructions" rows="6" required placeholder="Stapsgewijze bereidingsinstructies..."></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('recipe-form-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveRecipe()">Save Recipe</button>
+                <button class="btn btn-secondary" onclick="closeModal('recipe-form-modal')">Annuleren</button>
+                <button class="btn btn-primary" onclick="saveRecipe()">Opslaan</button>
             </div>
         </div>
     </div>
@@ -119,38 +119,38 @@
     <div id="generate-modal" class="modal-overlay">
         <div class="modal" style="max-width:500px">
             <div class="modal-header">
-                <h2>Generate Recipe</h2>
+                <h2>Recept genereren</h2>
                 <button class="btn-close" onclick="closeModal('generate-modal')">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-20">Select a country to generate an authentic recipe using AI.</p>
+                <p class="text-muted mb-20">Selecteer een land om een authentiek recept te genereren met AI.</p>
                 <div class="form-group">
-                    <label>Country</label>
+                    <label>Land</label>
                     <select id="generate-country" style="width:100%">
-                        <option value="">Loading countries...</option>
+                        <option value="">Landen laden...</option>
                     </select>
                 </div>
-                <button class="btn btn-secondary btn-small mb-20" onclick="randomCountry()">Random Country</button>
+                <button class="btn btn-secondary btn-small mb-20" onclick="randomCountry()">Willekeurig land</button>
                 <div class="form-group">
-                    <label>Anything specific?</label>
-                    <input type="text" id="generate-instructions" placeholder="e.g. vegetarian, uses rice, spicy, quick...">
+                    <label>Specifieke wensen?</label>
+                    <input type="text" id="generate-instructions" placeholder="bijv. vegetarisch, met rijst, pittig, snel...">
                 </div>
                 <div id="generate-status" class="hidden">
                     <div style="display:flex;align-items:center;gap:10px;padding:20px;background:var(--bg-dark);border-radius:8px">
                         <div class="spinner"></div>
-                        <span id="generate-status-text">Generating recipe...</span>
+                        <span id="generate-status-text">Recept genereren...</span>
                     </div>
                 </div>
                 <div id="generate-raw" class="hidden">
-                    <h3 class="mb-10">Raw LLM Response</h3>
-                    <p class="text-muted mb-10">Failed to parse JSON. You can copy and manually adjust:</p>
+                    <h3 class="mb-10">Ruwe LLM respons</h3>
+                    <p class="text-muted mb-10">JSON kon niet worden verwerkt. Je kunt het kopi&euml;ren en handmatig aanpassen:</p>
                     <textarea id="generate-raw-text" rows="10" style="width:100%"></textarea>
-                    <button class="btn btn-secondary btn-small mt-10" onclick="copyRaw()">Copy to Clipboard</button>
+                    <button class="btn btn-secondary btn-small mt-10" onclick="copyRaw()">Kopi&euml;ren naar klembord</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('generate-modal')">Cancel</button>
-                <button id="generate-btn" class="btn btn-primary" onclick="generateRecipe()">Generate</button>
+                <button class="btn btn-secondary" onclick="closeModal('generate-modal')">Annuleren</button>
+                <button id="generate-btn" class="btn btn-primary" onclick="generateRecipe()">Genereren</button>
             </div>
         </div>
     </div>

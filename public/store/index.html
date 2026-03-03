@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store - Grocies</title>
+    <title>Winkel - Grocies</title>
     <link rel="stylesheet" href="/shared/common.css">
     <link rel="stylesheet" href="store.css">
 </head>
@@ -11,26 +11,26 @@
     <div class="page-container">
         <!-- Login Section -->
         <div id="login-section" class="card hidden">
-            <h2>Login to Jumbo</h2>
-            <p class="text-muted mb-20">Enter your Jumbo account credentials to browse products and manage your basket.</p>
+            <h2>Inloggen bij Jumbo</h2>
+            <p class="text-muted mb-20">Vul je Jumbo accountgegevens in om producten te zoeken en je mandje te beheren.</p>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="username">Email</label>
-                    <input type="email" id="username" name="username" required placeholder="your-email@example.com">
+                    <label for="username">E-mail</label>
+                    <input type="email" id="username" name="username" required placeholder="je-email@voorbeeld.nl">
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <label for="password">Wachtwoord</label>
+                    <input type="password" id="password" name="password" required placeholder="Voer je wachtwoord in">
                 </div>
                 <div class="form-group checkbox">
                     <label>
                         <input type="checkbox" id="remember" name="remember" checked>
-                        Remember credentials
+                        Gegevens onthouden
                     </label>
                 </div>
                 <button type="submit" id="login-btn" class="btn btn-primary">
                     <span class="spinner hidden"></span>
-                    <span class="btn-text">Login</span>
+                    <span class="btn-text">Inloggen</span>
                 </button>
             </form>
         </div>
@@ -38,17 +38,17 @@
         <!-- Store Section -->
         <div id="store-section" class="hidden">
             <div class="section-header">
-                <h1>Store</h1>
+                <h1>Winkel</h1>
                 <div style="display:flex;gap:10px;align-items:center">
                     <span id="user-info" class="text-muted"></span>
-                    <button id="logout-btn" class="btn btn-danger btn-small">Logout</button>
+                    <button id="logout-btn" class="btn btn-danger btn-small">Uitloggen</button>
                 </div>
             </div>
 
             <!-- Search -->
             <div class="search-bar mb-20">
-                <input type="search" id="search-input" placeholder="Search products (e.g. 'melk', 'brood', 'kaas')">
-                <button id="search-btn" class="btn btn-primary">Search</button>
+                <input type="search" id="search-input" placeholder="Zoek producten (bijv. 'melk', 'brood', 'kaas')">
+                <button id="search-btn" class="btn btn-primary">Zoeken</button>
             </div>
 
             <!-- Results -->

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voorraad - Grocies</title>
+    <link rel="stylesheet" href="/shared/common.css">
+    <link rel="stylesheet" href="voorraad.css">
+</head>
+<body>
+    <div class="page-container">
+        <div class="section-header">
+            <h1>Voorraad</h1>
+            <div style="display:flex;gap:10px">
+                <button class="btn btn-secondary" onclick="showExpired()">Verlopen items</button>
+                <button class="btn btn-primary" onclick="openAddStock()">Aanvullen</button>
+            </div>
+        </div>
+
+        <!-- Expired Alert -->
+        <div id="expired-alert" class="expired-alert hidden mb-20">
+            <span id="expired-count"></span>
+            <button class="btn btn-secondary btn-small" onclick="showExpired()">Bekijk verlopen</button>
+        </div>
+
+        <!-- Stock List -->
+        <div id="stock-list" class="stock-list"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state hidden">
+            <div class="empty-icon">&#128230;</div>
+            <p>Geen voorraad bijgehouden</p>
+            <button class="btn btn-primary" onclick="openAddStock()">Voeg voorraad toe</button>
+        </div>
+    </div>
+
+    <!-- Add Stock Modal -->
+    <div id="add-stock-modal" class="modal-overlay">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-header">
+                <h2>Voorraad aanvullen</h2>
+                <button class="btn-close" onclick="closeModal('add-stock-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Ingredi&euml;nt</label>
+                    <input type="text" id="stock-ingredient" placeholder="bijv. kipfilet" required>
+                </div>
+                <div class="form-group">
+                    <label>Hoeveelheid</label>
+                    <input type="number" id="stock-quantity" placeholder="bijv. 500" step="any" required>
+                </div>
+                <div class="form-group">
+                    <label>Eenheid</label>
+                    <input type="text" id="stock-unit" placeholder="bijv. g, ml, stuks" required>
+                </div>
+                <div class="form-group">
+                    <label>Houdbaarheid (dagen)</label>
+                    <input type="number" id="stock-shelf-life" placeholder="bijv. 7">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('add-stock-modal')">Annuleren</button>
+                <button class="btn btn-primary" onclick="saveStock()">Toevoegen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Quantity Modal -->
+    <div id="edit-qty-modal" class="modal-overlay">
+        <div class="modal" style="max-width:400px">
+            <div class="modal-header">
+                <h2>Hoeveelheid aanpassen</h2>
+                <button class="btn-close" onclick="closeModal('edit-qty-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-stock-id">
+                <div class="form-group">
+                    <label id="edit-qty-label">Resterende hoeveelheid</label>
+                    <input type="number" id="edit-qty-value" step="any" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('edit-qty-modal')">Annuleren</button>
+                <button class="btn btn-primary" onclick="updateQuantity()">Opslaan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/shared/utils.js"></script>
+    <script src="voorraad.js"></script>
+</body>
+</html>

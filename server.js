@@ -11,6 +11,7 @@ const RecipeService = require('./lib/recipe-service');
 const QueueService = require('./lib/queue-service');
 const MappingService = require('./lib/mapping-service');
 const ShoppingListService = require('./lib/shopping-list-service');
+const StockService = require('./lib/stock-service');
 const LLMService = require('./lib/llm-service');
 const { JumboGraphQL } = require('./jumbo/jumbo-graphql');
 
@@ -42,13 +43,14 @@ const authService = new AuthService('./data/credentials.json');
 const recipeService = new RecipeService(db);
 const queueService = new QueueService(db);
 const mappingService = new MappingService(db);
-const shoppingListService = new ShoppingListService(db, mappingService);
+const stockService = new StockService(db);
+const shoppingListService = new ShoppingListService(db, mappingService, stockService);
 
 // Initialize LLM service (optional, only if API key is provided)
 let llmService = null;
 if (process.env.ANTHROPIC_API_KEY) {
     try {
-        llmService = new LLMService(process.env.ANTHROPIC_API_KEY, process.env.LLM_PROVIDER || 'anthropic');
+        llmService = new LLMService(process.env.ANTHROPIC_API_KEY, process.env.LLM_PROVIDER || 'anthropic', process.env.RECIPE_LANGUAGE || 'English');
         console.log('✓ LLM service initialized');
     } catch (error) {
         console.warn('⚠️  LLM service not initialized:', error.message);
@@ -64,12 +66,13 @@ function getJumboClient() {
 }
 
 // Mount API routes
-app.use('/api/auth', require('./api/auth')(authService));
+app.use('/api/auth', require('./api/auth')(authService, getJumboClient));
 app.use('/api/store', require('./api/store')(authService, getJumboClient));
 app.use('/api/recipes', require('./api/recipes')(recipeService, llmService));
-app.use('/api/queue', require('./api/queue')(queueService));
-app.use('/api/mappings', require('./api/mappings')(mappingService));
+app.use('/api/queue', require('./api/queue')(queueService, stockService));
+app.use('/api/mappings', require('./api/mappings')(mappingService, llmService, getJumboClient));
 app.use('/api/shopping-list', require('./api/shopping-list')(shoppingListService, authService, getJumboClient));
+app.use('/api/stock', require('./api/stock')(stockService, mappingService, recipeService));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -120,6 +123,22 @@ app.listen(PORT, () => {
     console.log(`   Mappings: http://localhost:${PORT}/mappings/`);
     console.log(`   Shopping List: http://localhost:${PORT}/shopping-list/`);
     console.log('\n📊 Press Ctrl+C to stop\n');
+
+    // Auto-login on startup: always re-authenticate to ensure fresh cookies.
+    // Runs in background so it doesn't delay server readiness.
+    setTimeout(async () => {
+        if (authService.hasSavedCredentials()) {
+            console.log('🔄 Background auto-login on startup...');
+            const result = await authService.autoLogin();
+            if (result.success) {
+                console.log('✓ Startup auto-login successful');
+            } else {
+                console.warn('⚠️  Startup auto-login failed:', result.error);
+            }
+        } else {
+            console.log('ℹ️  No saved credentials — open the app and log in via the connection sidebar');
+        }
+    }, 500);
 });
 
 // Graceful shutdown
