@@ -25,8 +25,13 @@
         <a href="/mappings/">Koppelingen</a>
         <a href="/voorraad/">Voorraad</a>
         <a href="/shopping-list/">Boodschappen</a>
+        <a href="/settings/">Instellingen</a>
     </nav>
     <div class="user-actions">
+        <!-- Report issue button -->
+        <button class="btn btn-secondary btn-small" onclick="openIssueModal()" title="Meld een probleem">
+            🐛
+        </button>
         <!-- Connection status dot — click to open auth sidebar -->
         <button id="auth-dot-btn" class="auth-dot-btn" title="Jumbo verbinding" onclick="openAuthSidebar()">
             <span id="auth-dot" class="auth-dot auth-dot--checking">●</span>
@@ -47,6 +52,27 @@
         <button id="close-basket-btn" class="btn-close">&times;</button>
     </div>
     <div id="basket-content" class="basket-sidebar-content"></div>
+</div>
+
+<!-- Report Issue Modal -->
+<div id="issue-modal-overlay" class="issue-modal-overlay" onclick="if(event.target===this)closeIssueModal()">
+    <div class="issue-modal">
+        <h2>🐛 Issue melden</h2>
+        <div class="form-group" style="margin-bottom:10px;">
+            <label style="font-size:0.85rem;font-weight:500;display:block;margin-bottom:4px;">Titel *</label>
+            <input type="text" id="issue-title" placeholder="Korte omschrijving van het probleem"
+                style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:0.9rem;">
+        </div>
+        <div class="form-group" style="margin-bottom:4px;">
+            <label style="font-size:0.85rem;font-weight:500;display:block;margin-bottom:4px;">Beschrijving</label>
+            <textarea id="issue-body" placeholder="Wat ging er mis? Stappen om te reproduceren, verwacht gedrag, etc."></textarea>
+        </div>
+        <div id="issue-result" style="display:none;font-size:0.85rem;margin:8px 0;padding:8px;border-radius:6px;"></div>
+        <div class="issue-modal-actions">
+            <button class="btn btn-secondary btn-small" onclick="closeIssueModal()">Annuleren</button>
+            <button class="btn btn-primary btn-small" onclick="submitIssue()" id="issue-submit-btn">Issue aanmaken</button>
+        </div>
+    </div>
 </div>
 
 <!-- Auth / Connection Sidebar -->

@@ -6,6 +6,7 @@ const path = require('path');
 
 // Import services
 const MealPlannerDatabase = require('./lib/database');
+const SettingsService = require('./lib/settings-service');
 const AuthService = require('./lib/auth-service');
 const RecipeService = require('./lib/recipe-service');
 const QueueService = require('./lib/queue-service');
@@ -30,6 +31,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Serve uploaded files (recipe images)
 app.use('/uploads', express.static(path.join(__dirname, 'data/uploads')));
 
+// Settings page
+app.use('/settings', express.static(path.join(__dirname, 'public/settings')));
+
 // Initialize database
 console.log('\n🚀 Initializing Grocies Application...\n');
 const database = new MealPlannerDatabase(process.env.DB_PATH || './data/meal-planner.db');
@@ -45,6 +49,10 @@ const queueService = new QueueService(db);
 const mappingService = new MappingService(db);
 const stockService = new StockService(db);
 const shoppingListService = new ShoppingListService(db, mappingService, stockService);
+
+// Initialize settings
+const settingsService = new SettingsService('./data/settings.json');
+console.log('✓ Settings service initialized');
 
 // Initialize LLM service (optional, only if API key is provided)
 let llmService = null;
@@ -73,6 +81,7 @@ app.use('/api/queue', require('./api/queue')(queueService, stockService));
 app.use('/api/mappings', require('./api/mappings')(mappingService, llmService, getJumboClient));
 app.use('/api/shopping-list', require('./api/shopping-list')(shoppingListService, authService, getJumboClient));
 app.use('/api/stock', require('./api/stock')(stockService, mappingService, recipeService));
+app.use('/api/settings', require('./api/settings')(settingsService));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

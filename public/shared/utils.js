@@ -181,6 +181,7 @@ async function loadHeader(currentPage) {
             if (e.key === 'Escape') {
                 closeBasketSidebar();
                 closeAuthSidebar();
+                if (window.closeIssueModal) window.closeIssueModal();
                 document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
             }
         });
@@ -528,6 +529,60 @@ window.doJumboLogin = async function() {
         if (errEl) { errEl.textContent = e.message || 'Inloggen mislukt'; errEl.style.display = 'block'; }
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Inloggen'; }
+    }
+};
+
+// =====================
+// Report Issue Modal
+// =====================
+window.openIssueModal = function() {
+    const overlay = document.getElementById('issue-modal-overlay');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    const resultEl = document.getElementById('issue-result');
+    if (resultEl) resultEl.style.display = 'none';
+};
+
+window.closeIssueModal = function() {
+    const overlay = document.getElementById('issue-modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+window.submitIssue = async function() {
+    const title = document.getElementById('issue-title')?.value?.trim();
+    const body  = document.getElementById('issue-body')?.value?.trim();
+    const btn   = document.getElementById('issue-submit-btn');
+    const resultEl = document.getElementById('issue-result');
+
+    if (!title) { showToast('Vul een titel in', 'error'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Aanmaken…'; }
+    if (resultEl) resultEl.style.display = 'none';
+
+    try {
+        const data = await apiRequest('/settings/issues', {
+            method: 'POST',
+            body: JSON.stringify({ title, body, labels: ['bug'] })
+        });
+        if (resultEl) {
+            resultEl.style.display = 'block';
+            resultEl.style.background = '#e8f5e9';
+            resultEl.style.color = '#2e7d32';
+            resultEl.innerHTML = `✅ Issue aangemaakt: <a href="${data.issue.url}" target="_blank" style="color:inherit;font-weight:600;">#${data.issue.number} – ${data.issue.title}</a>`;
+        }
+        if (document.getElementById('issue-title')) document.getElementById('issue-title').value = '';
+        if (document.getElementById('issue-body'))  document.getElementById('issue-body').value  = '';
+        showToast(`Issue #${data.issue.number} aangemaakt`, 'success');
+    } catch (e) {
+        if (resultEl) {
+            resultEl.style.display = 'block';
+            resultEl.style.background = '#fdecea';
+            resultEl.style.color = '#c62828';
+            resultEl.textContent = '❌ ' + (e.message || 'Aanmaken mislukt. Controleer je GitHub token in Instellingen.');
+        }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Issue aanmaken'; }
     }
 };
 

@@ -1,45 +1,30 @@
 # Dependencies
 node_modules/
-package-lock.json
 
-# Data (database, credentials, uploads)
-data/
-
-# Credentials & Secrets
-credentials.json
+# Environment & secrets
 .env
-.env.*
+data/credentials.json
+data/settings.json
 
-# Legacy folders (content distributed into main structure)
-StoreManagementTest/
-JumboAPI/
+# Database (keep schema, not data)
+data/meal-planner.db
+data/meal-planner.db-shm
+data/meal-planner.db-wal
 
-# Python
-.venv/
-__pycache__/
-*.pyc
+# Uploads
+data/uploads/
 
-# Logs
-*.log
-npm-debug.log*
-
-# OS Files
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# IDE / Editor
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# Temp
-*.tmp
-*.temp
-.cache/
+# Claude
+.claude/
 
-# Build
-dist/
-build/
+# Scratch / prototype folders
+JumboAPI_toBeRemoved/
+StoreManagementTestToBeRemoved/

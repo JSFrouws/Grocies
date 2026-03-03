@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instellingen – Grocies</title>
+    <link rel="stylesheet" href="/shared/common.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="page-container" style="max-width:760px;">
+        <div class="section-header" style="margin-bottom:24px;">
+            <h1>Instellingen</h1>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-small" onclick="resetDefaults()">Standaard herstellen</button>
+                <button class="btn btn-primary btn-small" onclick="saveAll()" id="save-btn">Opslaan</button>
+            </div>
+        </div>
+
+        <!-- Household -->
+        <section class="settings-section">
+            <h2>🏠 Huishouden</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="household_size">Aantal personen</label>
+                        <span class="setting-hint">Standaard porties bij receptgeneratie en boodschappen</span>
+                    </div>
+                    <input type="number" id="household_size" min="1" max="12" step="1" class="setting-input setting-input--sm">
+                </div>
+            </div>
+        </section>
+
+        <!-- Recipe selection -->
+        <section class="settings-section">
+            <h2>🎲 Receptselectie</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="avoid_days">Herhaalvrije periode (dagen)</label>
+                        <span class="setting-hint">Hoeveel dagen voordat een recept opnieuw beschikbaar is bij willekeurige selectie</span>
+                    </div>
+                    <input type="number" id="avoid_days" min="1" max="90" step="1" class="setting-input setting-input--sm">
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="expiry_boost_days">Verloopboost (dagen voor THT)</label>
+                        <span class="setting-hint">Recepten die voorraad met THT binnen dit aantal dagen gebruiken krijgen voorrang</span>
+                    </div>
+                    <input type="number" id="expiry_boost_days" min="1" max="30" step="1" class="setting-input setting-input--sm">
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="expiry_boost_factor">Verloopboost factor</label>
+                        <span class="setting-hint">Vermenigvuldigingsfactor voor receptgewicht bij verlopende ingrediënten (bijv. 3 = 3× hogere kans)</span>
+                    </div>
+                    <input type="number" id="expiry_boost_factor" min="1" max="10" step="0.5" class="setting-input setting-input--sm">
+                </div>
+            </div>
+        </section>
+
+        <!-- Recipe generation -->
+        <section class="settings-section">
+            <h2>🤖 Receptgeneratie</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="recipe_language">Taal voor gegenereerde recepten</label>
+                        <span class="setting-hint">De taal die Claude gebruikt voor receptnamen, ingrediënten en instructies</span>
+                    </div>
+                    <select id="recipe_language" class="setting-input setting-input--sm">
+                        <option value="Dutch">Nederlands</option>
+                        <option value="English">English</option>
+                        <option value="French">Français</option>
+                        <option value="German">Deutsch</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Jumbo connection -->
+        <section class="settings-section">
+            <h2>🔌 Jumbo verbinding</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="session_ttl_hours">Sessie TTL (uren)</label>
+                        <span class="setting-hint">Hoe lang de Jumbo-sessie als geldig wordt beschouwd zonder hercontrole. Na dit interval wordt opnieuw ingelogd.</span>
+                    </div>
+                    <input type="number" id="session_ttl_hours" min="1" max="24" step="1" class="setting-input setting-input--sm">
+                </div>
+            </div>
+            <p class="setting-note">💡 Je Jumbo-inloggegevens worden beheerd via de verbindingsstatus-knop (●) rechtsboven.</p>
+        </section>
+
+        <!-- GitHub integration -->
+        <section class="settings-section">
+            <h2>🐙 GitHub integratie</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="github_repo">Repository (owner/repo)</label>
+                        <span class="setting-hint">GitHub repository voor het aanmaken van issues, bijv. JSFrouws/Grocies</span>
+                    </div>
+                    <input type="text" id="github_repo" placeholder="JSFrouws/Grocies" class="setting-input">
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="github_token">Personal Access Token</label>
+                        <span class="setting-hint">GitHub PAT met <code>repo</code>-scope. Wordt lokaal opgeslagen. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Grocies" target="_blank">Token aanmaken →</a></span>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="password" id="github_token" placeholder="ghp_…" class="setting-input" autocomplete="new-password">
+                        <button class="btn btn-secondary btn-small" onclick="toggleTokenVisibility()" id="token-eye-btn" title="Toon/verberg token">👁</button>
+                    </div>
+                </div>
+                <div class="setting-row" id="token-status-row" style="display:none;">
+                    <div class="setting-label"></div>
+                    <span id="token-status" class="setting-hint"></span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="testGitHub()" style="margin-top:8px;" id="test-gh-btn">
+                Verbinding testen
+            </button>
+        </section>
+
+        <!-- App info -->
+        <section class="settings-section settings-section--muted">
+            <h2>ℹ️ App informatie</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label"><label>Versie</label></div>
+                    <span id="info-version" class="setting-hint" style="font-family:monospace;">—</span>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label"><label>GitHub repository</label></div>
+                    <a id="info-repo-link" href="#" target="_blank" class="setting-hint" style="color:var(--spierings-orange);">—</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/shared/utils.js"></script>
+    <script src="/settings/settings.js"></script>
+</body>
+</html>
