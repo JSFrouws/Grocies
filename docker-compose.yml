@@ -1,0 +1,19 @@
+services:
+  grocies:
+    build: .
+    container_name: grocies
+    restart: unless-stopped
+    ports:
+      # APP_PORT is injected by WebApp Manager (8100-8199 range).
+      # Falls back to 8110 for direct `docker compose up` usage.
+      - "${APP_PORT:-8110}:3000"
+    volumes:
+      - grocies-data:/app/data
+    env_file:
+      - .env
+    environment:
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+volumes:
+  grocies-data:

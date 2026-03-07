@@ -1,0 +1,62 @@
+name: Deploy Grocies to Pi
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: GrociesRunnerOnPi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: System info
+        run: |
+          set -euxo pipefail
+          echo "🏷 Host: $(hostname) | 👤 User: $(whoami) | 📅 $(date)"
+          df -h | grep -E 'Size|/dev'
+          free -h || true
+
+      - name: Sync app files to WebApps directory
+        run: |
+          set -euxo pipefail
+          DEST="$HOME/Documents/WebApps/Grocies"
+          mkdir -p "$DEST"
+
+          # Sync everything except runtime-generated/secret files
+          rsync -av --delete \
+            --exclude='node_modules/' \
+            --exclude='data/' \
+            --exclude='.env' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            . "$DEST/"
+
+          echo ">>> Files synced to $DEST"
+
+      - name: Write .env file
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          JUMBO_EMAIL: ${{ secrets.JUMBO_EMAIL }}
+          JUMBO_PASSWORD: ${{ secrets.JUMBO_PASSWORD }}
+        run: |
+          set -euo pipefail
+          DEST="$HOME/Documents/WebApps/Grocies"
+          cat > "$DEST/.env" <<EOF
+          ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+          JUMBO_EMAIL=${JUMBO_EMAIL:-}
+          JUMBO_PASSWORD=${JUMBO_PASSWORD:-}
+          NODE_ENV=production
+          PORT=3000
+          EOF
+          echo ">>> .env written"
+
+      - name: Build and start container
+        run: |
+          set -euxo pipefail
+          DEST="$HOME/Documents/WebApps/Grocies"
+          cd "$DEST"
+          sudo docker compose up -d --build --force-recreate
+          echo ">>> Grocies running at http://$(hostname -I | awk '{print $1}'):${APP_PORT:-8110}"
