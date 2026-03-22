@@ -1,3 +1,4 @@
+  # base-tag: inject <base> tag in nginx proxy for iframe subpath support
 services:
   grocies:
     build: .

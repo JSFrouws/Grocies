@@ -627,7 +627,7 @@ async function saveMappingFromShoppingList() {
 // =====================
 async function exportAsText() {
     try {
-        const response = await fetch('/api/shopping-list/export');
+        const response = await fetch(API_BASE + '/shopping-list/export');
         const text = await response.text();
         await navigator.clipboard.writeText(text);
         showToast('Boodschappenlijst gekopieerd naar klembord', 'success');

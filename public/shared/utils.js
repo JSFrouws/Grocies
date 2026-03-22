@@ -2,7 +2,9 @@
 // Grocies Shared Utilities
 // =====================
 
-const API_BASE = '/api';
+// Detect base path — works both standalone (/) and inside iframe (/apps/Grocies/)
+const _base = document.baseURI ? new URL(document.baseURI).pathname.replace(/\/$/, '') : '';
+const API_BASE = _base + '/api';
 
 // =====================
 // Toast Notification System
@@ -137,7 +139,7 @@ function closeModal(modalId) {
 // =====================
 async function loadHeader(currentPage) {
     try {
-        const response = await fetch('/shared/header.html');
+        const response = await fetch(_base + '/shared/header.html');
         const html = await response.text();
 
         // Insert header and basket sidebar at the top of body
@@ -477,7 +479,7 @@ async function checkAndEnsureSession() {
     setAuthDot('checking', '...');
     let status;
     try {
-        status = await fetch('/api/auth/status').then(r => r.json());
+        status = await fetch(API_BASE + '/auth/status').then(r => r.json());
     } catch (e) {
         setAuthDot('offline', 'Geen server');
         return;
@@ -506,9 +508,9 @@ async function checkAndEnsureSession() {
     // Attempt silent re-login
     refreshAuthSidebarDisplay({ ...status, _relogining: true });
     try {
-        const result = await fetch('/api/auth/relogin', { method: 'POST' }).then(r => r.json());
+        const result = await fetch(API_BASE + '/auth/relogin', { method: 'POST' }).then(r => r.json());
         if (result.success) {
-            const fresh = await fetch('/api/auth/status').then(r => r.json());
+            const fresh = await fetch(API_BASE + '/auth/status').then(r => r.json());
             setAuthDot('ok', fresh.username || 'Verbonden');
             refreshAuthSidebarDisplay(fresh);
         } else {
@@ -540,7 +542,7 @@ window.doJumboLogin = async function() {
         });
         if (result.success) {
             if (document.getElementById('auth-password')) document.getElementById('auth-password').value = '';
-            const fresh = await fetch('/api/auth/status').then(r => r.json());
+            const fresh = await fetch(API_BASE + '/auth/status').then(r => r.json());
             setAuthDot('ok', fresh.username || 'Verbonden');
             refreshAuthSidebarDisplay(fresh);
             showToast('Ingelogd bij Jumbo', 'success');
