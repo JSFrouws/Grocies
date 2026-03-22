@@ -129,6 +129,46 @@ h1, h2, h3, h4 {
     background: rgba(253, 195, 0, 0.15);
 }
 
+/* Hamburger Button — hidden on desktop */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 8px;
+    z-index: 1102;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--spierings-dark);
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+
+.hamburger-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Nav overlay — mobile only */
+.nav-overlay {
+    display: none;
+}
+
 .main-header .user-actions {
     display: flex;
     align-items: center;
@@ -1045,10 +1085,10 @@ select {
     align-items: center;
     gap: 16px;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 .setting-label {
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 200px;
 }
 .setting-label label {
     font-size: 0.9rem;
@@ -1182,30 +1222,80 @@ select {
 
 @media (max-width: 768px) {
     .main-header {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 0 12px 8px 0;
+        height: 52px;
+        padding: 0 10px 0 0;
         gap: 0;
     }
 
     .main-header .logo {
-        height: 48px;
+        height: 52px;
         font-size: 16px;
         padding: 0 28px 0 16px;
-        margin-right: 12px;
+        margin-right: auto;
+    }
+
+    /* Show hamburger on mobile */
+    .hamburger-btn {
+        display: flex;
+        order: -1;
+    }
+
+    /* Nav becomes a slide-out sidebar */
+    .nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(55, 63, 67, 0.5);
+        z-index: 1100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+
+    .nav-overlay.active {
+        display: block;
+        opacity: 1;
+        visibility: visible;
     }
 
     .main-header nav {
-        order: 3;
-        width: 100%;
-        overflow-x: auto;
-        padding: 4px 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        max-width: 80vw;
+        height: 100vh;
+        background: var(--color-bg);
+        flex-direction: column;
+        gap: 0;
+        padding: 72px 0 24px 0;
+        z-index: 1101;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 20px rgba(55, 63, 67, 0.15);
+        border-right: 3px solid var(--spierings-yellow);
+        overflow-y: auto;
+    }
+
+    .main-header nav.active {
+        transform: translateX(0);
     }
 
     .main-header nav a {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-        white-space: nowrap;
+        padding: 14px 24px;
+        font-size: 0.9rem;
+        border-radius: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .main-header nav a:last-child {
+        border-bottom: none;
+    }
+
+    .main-header nav a.active {
+        border-left: 3px solid var(--spierings-yellow);
     }
 
     .page-container {

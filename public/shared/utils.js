@@ -156,6 +156,27 @@ async function loadHeader(currentPage) {
             }
         });
 
+        // Setup hamburger menu
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const mainNav = document.getElementById('main-nav');
+        const navOverlay = document.getElementById('nav-overlay');
+
+        function toggleNav() {
+            const isOpen = mainNav.classList.toggle('active');
+            hamburgerBtn.classList.toggle('active', isOpen);
+            navOverlay.classList.toggle('active', isOpen);
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', toggleNav);
+            navOverlay.addEventListener('click', toggleNav);
+            // Close nav when a link is clicked
+            navLinks.forEach(link => link.addEventListener('click', () => {
+                if (mainNav.classList.contains('active')) toggleNav();
+            }));
+        }
+
         // Setup basket button
         const basketBtn = document.getElementById('basket-btn');
         if (basketBtn) {
