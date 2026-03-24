@@ -92,7 +92,14 @@
                     </div>
                     <div class="form-group" style="flex:1">
                         <label>Eenheid verpakking</label>
-                        <input type="text" id="mapping-package-unit" placeholder="bijv. g, ml, stuks">
+                        <select id="mapping-package-unit">
+                            <option value="">Eenheid</option>
+                            <option value="L">L</option>
+                            <option value="mL">mL</option>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="stuks">stuks</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex:1">
                         <label>Houdbaarheid (dagen)</label>
@@ -121,6 +128,7 @@
     </div>
 
     <script src="/shared/utils.js"></script>
+    <script src="/shared/units.js"></script>
     <script src="mappings.js"></script>
 </body>
 </html>

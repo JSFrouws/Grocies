@@ -23,17 +23,20 @@ function renderPreview(list) {
     const totalUnmapped = list.unmappedItems?.length || 0;
     const recipes = list.recipes || [];
 
+    const totalRecurring = list.recurringItems?.length || 0;
     summary.innerHTML = `
         <span class="tag">${recipes.length} recept${recipes.length !== 1 ? 'en' : ''}</span>
         <span class="tag">${totalMapped} gekoppeld</span>
+        ${totalRecurring > 0 ? `<span class="tag">${totalRecurring} vaste items</span>` : ''}
         ${totalUnmapped > 0 ? `<span class="tag tag-warning">${totalUnmapped} niet gekoppeld</span>` : ''}
     `;
 
     renderRecipeView(list);
     renderCategoryView(list);
+    renderRecurring(list);
     renderUnmapped(list);
 
-    document.getElementById('add-to-basket-btn').disabled = totalMapped === 0;
+    document.getElementById('add-to-basket-btn').disabled = totalMapped === 0 && !(list.recurringItems?.length > 0);
 
     if (recipes.length === 0) {
         document.getElementById('recipe-view').innerHTML = `
@@ -254,6 +257,50 @@ function renderUnmapped(list) {
 }
 
 // =====================
+// Recurring Items
+// =====================
+function renderRecurring(list) {
+    const section = document.getElementById('recurring-section');
+    const container = document.getElementById('recurring-items');
+    const items = list.recurringItems || [];
+
+    if (items.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+    const rateLabels = { weekly: 'Wekelijks', biweekly: 'Om de week', monthly: 'Maandelijks' };
+
+    container.innerHTML = items.map(item => {
+        const details = item.productDetails || {};
+        const checked = item.jumboSku ? 'checked' : '';
+        const priceStr = details.price ? ` \u2014 \u20AC${(details.price / 100).toFixed(2)}` : '';
+
+        return `
+        <div class="shopping-item${item.jumboSku ? '' : ' unmapped'}">
+            <div class="shopping-item-check">
+                <input type="checkbox" ${checked}
+                    ${item.jumboSku ? `data-sku="${item.jumboSku}" data-recurring="1" data-qty="${item.quantity}"` : 'disabled'}
+                    onchange="updateSelectedCount()">
+            </div>
+            <div class="shopping-item-info">
+                <div class="shopping-item-name">
+                    ${escapeHtml(item.itemName)}
+                    <span class="text-muted">(${item.quantity}x, ${rateLabels[item.occurrenceRate] || item.occurrenceRate})</span>
+                </div>
+                ${details.title ? `
+                <div class="shopping-item-product">
+                    ${details.image ? `<img src="${details.image}" class="shopping-item-image">` : ''}
+                    <span>${escapeHtml(details.title)}${priceStr}</span>
+                </div>` : ''}
+                ${!item.jumboSku ? '<div class="text-muted" style="font-size:12px">Niet gekoppeld &mdash; <a href="/recurring/">koppel in Vaste Items</a></div>' : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// =====================
 // View Switching
 // =====================
 function switchView(view) {
@@ -281,15 +328,17 @@ function toggleRecipeAll(recipeId, checked) {
 
 function updateSelectedCount() {
     const activeView = currentView === 'recipe' ? 'recipe-view' : 'category-view';
-    const checked = document.querySelectorAll(`#${activeView} input[type="checkbox"][data-sku]:checked`);
+    const viewChecked = document.querySelectorAll(`#${activeView} input[type="checkbox"][data-sku]:checked`);
+    const recurringChecked = document.querySelectorAll(`#recurring-items input[type="checkbox"][data-sku]:checked`);
+    const total = viewChecked.length + recurringChecked.length;
     const btn = document.getElementById('add-to-basket-btn');
-    btn.textContent = `Geselecteerde toevoegen (${checked.length})`;
-    btn.disabled = checked.length === 0;
+    btn.textContent = `Geselecteerde toevoegen (${total})`;
+    btn.disabled = total === 0;
 }
 
 function getSelectedSkus() {
     const activeView = currentView === 'recipe' ? 'recipe-view' : 'category-view';
-    const checked = document.querySelectorAll(`#${activeView} input[type="checkbox"][data-sku]:checked`);
+    const checked = document.querySelectorAll(`#${activeView} input[type="checkbox"][data-sku]:checked, #recurring-items input[type="checkbox"][data-sku]:checked`);
     const skus = new Set();
     checked.forEach(cb => skus.add(cb.dataset.sku));
     return Array.from(skus);
@@ -660,6 +709,16 @@ function setupModalListeners() {
                 return;
             }
             similarDebounceTimer = setTimeout(() => lookupSimilar(name), 400);
+        });
+        ingredientInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const similarEl = document.getElementById('similar-mappings');
+                const firstBtn = similarEl?.querySelector('[data-similar-index]');
+                if (firstBtn && !similarEl.classList.contains('hidden')) {
+                    e.preventDefault();
+                    useSimilarProduct(0);
+                }
+            }
         });
     }
 }

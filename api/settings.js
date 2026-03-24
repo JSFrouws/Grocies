@@ -2,7 +2,7 @@ const express = require('express');
 const https = require('https');
 const router = express.Router();
 
-function setupSettingsRoutes(settingsService) {
+function setupSettingsRoutes(settingsService, hooks = {}) {
 
     // GET /api/settings - Return all settings (token masked)
     router.get('/', (req, res) => {
@@ -13,6 +13,8 @@ function setupSettingsRoutes(settingsService) {
     router.put('/', (req, res) => {
         try {
             const updated = settingsService.update(req.body);
+            // Reinitialize services if API keys changed
+            if (hooks.onSave) hooks.onSave();
             res.json({ success: true, settings: updated, message: 'Instellingen opgeslagen' });
         } catch (e) {
             res.status(500).json({ success: false, error: e.message });

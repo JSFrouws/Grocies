@@ -28,8 +28,13 @@
         </a>
         <a href="/mappings/">Koppelingen</a>
         <a href="/voorraad/">Voorraad</a>
+        <a href="/recurring/">Vaste Items</a>
         <a href="/shopping-list/">Boodschappen</a>
         <a href="/settings/">Instellingen</a>
+        <a href="#" id="nav-basket-link" class="nav-basket-link badge-container" onclick="event.preventDefault();viewBasket();">
+            🛒 Mandje
+            <span class="badge hidden" id="nav-basket-count">0</span>
+        </a>
     </nav>
     <div class="user-actions">
         <!-- Report issue button -->
@@ -41,9 +46,13 @@
             <span id="auth-dot" class="auth-dot auth-dot--checking">●</span>
             <span id="auth-dot-label" class="auth-dot-label">…</span>
         </button>
-        <button id="basket-btn" class="btn btn-secondary btn-small badge-container">
-            Mandje
-            <span class="badge hidden" id="basket-count">0</span>
+        <button id="voice-btn" class="voice-btn" title="Houd ingedrukt om te spreken">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
         </button>
     </div>
 </header>
@@ -75,6 +84,35 @@
         <div class="issue-modal-actions">
             <button class="btn btn-secondary btn-small" onclick="closeIssueModal()">Annuleren</button>
             <button class="btn btn-primary btn-small" onclick="submitIssue()" id="issue-submit-btn">Issue aanmaken</button>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Recording Overlay -->
+<div id="voice-overlay" class="voice-overlay">
+    <div class="voice-overlay-content">
+        <div class="voice-pulse"></div>
+        <svg class="voice-mic-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <p class="voice-status-text">Luisteren...</p>
+    </div>
+</div>
+
+<!-- Voice Results Panel -->
+<div id="voice-results-overlay" class="voice-results-overlay" onclick="if(event.target===this)closeVoiceResults()"></div>
+<div id="voice-results-panel" class="voice-results-panel">
+    <div class="basket-sidebar-header">
+        <h2>Spraakcommando</h2>
+        <button class="btn-close" onclick="closeVoiceResults()">&times;</button>
+    </div>
+    <div id="voice-results-content" class="basket-sidebar-content">
+        <div class="voice-processing">
+            <div class="spinner"></div>
+            <p>Verwerken...</p>
         </div>
     </div>
 </div>

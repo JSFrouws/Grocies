@@ -13,7 +13,9 @@ const QueueService = require('./lib/queue-service');
 const MappingService = require('./lib/mapping-service');
 const ShoppingListService = require('./lib/shopping-list-service');
 const StockService = require('./lib/stock-service');
+const RecurringService = require('./lib/recurring-service');
 const LLMService = require('./lib/llm-service');
+const VoiceService = require('./lib/voice-service');
 const { JumboGraphQL } = require('./jumbo/jumbo-graphql');
 
 // Initialize Express app
@@ -48,24 +50,29 @@ const recipeService = new RecipeService(db);
 const queueService = new QueueService(db);
 const mappingService = new MappingService(db);
 const stockService = new StockService(db);
-const shoppingListService = new ShoppingListService(db, mappingService, stockService);
+const recurringService = new RecurringService(db);
+const shoppingListService = new ShoppingListService(db, mappingService, stockService, recurringService);
 
 // Initialize settings
 const settingsService = new SettingsService('./data/settings.json');
 console.log('✓ Settings service initialized');
 
-// Initialize LLM service (optional, only if API key is provided)
+// Initialize LLM service — settings key takes priority over .env
 let llmService = null;
-if (process.env.ANTHROPIC_API_KEY) {
+function initLLMService() {
+    const apiKey = settingsService.get('anthropic_api_key') || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+        console.warn('⚠️  LLM service not available (no Anthropic API key in settings or .env)');
+        return;
+    }
     try {
-        llmService = new LLMService(process.env.ANTHROPIC_API_KEY, process.env.LLM_PROVIDER || 'anthropic', process.env.RECIPE_LANGUAGE || 'English');
+        llmService = new LLMService(apiKey, 'anthropic', settingsService.get('recipe_language') || 'Dutch');
         console.log('✓ LLM service initialized');
     } catch (error) {
         console.warn('⚠️  LLM service not initialized:', error.message);
     }
-} else {
-    console.warn('⚠️  LLM service not available (no ANTHROPIC_API_KEY in .env)');
 }
+initLLMService();
 
 // Helper function to get Jumbo client
 function getJumboClient() {
@@ -73,15 +80,45 @@ function getJumboClient() {
     return new JumboGraphQL({ verbose: true, cookies });
 }
 
+// Initialize voice service (requires LLM client)
+let voiceService = null;
+function initVoiceService() {
+    if (llmService && llmService.client) {
+        voiceService = new VoiceService({
+            settingsService,
+            recipeService,
+            queueService,
+            stockService,
+            recurringService,
+            mappingService,
+            shoppingListService,
+            authService,
+            llmClient: llmService.client,
+            getJumboClient
+        });
+        console.log('✓ Voice service initialized');
+    }
+}
+initVoiceService();
+
+// Reinitialize LLM + voice when settings change (e.g. new API key)
+function reinitLLM() {
+    initLLMService();
+    initVoiceService();
+}
+
 // Mount API routes
 app.use('/api/auth', require('./api/auth')(authService, getJumboClient));
 app.use('/api/store', require('./api/store')(authService, getJumboClient));
-app.use('/api/recipes', require('./api/recipes')(recipeService, llmService));
+const getLLMService = () => llmService;
+app.use('/api/recipes', require('./api/recipes')(recipeService, getLLMService, mappingService));
 app.use('/api/queue', require('./api/queue')(queueService, stockService));
-app.use('/api/mappings', require('./api/mappings')(mappingService, llmService, getJumboClient));
+app.use('/api/mappings', require('./api/mappings')(mappingService, getLLMService, getJumboClient));
 app.use('/api/shopping-list', require('./api/shopping-list')(shoppingListService, authService, getJumboClient));
 app.use('/api/stock', require('./api/stock')(stockService, mappingService, recipeService));
-app.use('/api/settings', require('./api/settings')(settingsService));
+app.use('/api/recurring', require('./api/recurring')(recurringService, mappingService));
+app.use('/api/settings', require('./api/settings')(settingsService, { onSave: reinitLLM }));
+app.use('/api/voice', require('./api/voice')({ get: () => voiceService }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -130,6 +167,7 @@ app.listen(PORT, () => {
     console.log(`   Recipes: http://localhost:${PORT}/recipes/`);
     console.log(`   Queue: http://localhost:${PORT}/queue/`);
     console.log(`   Mappings: http://localhost:${PORT}/mappings/`);
+    console.log(`   Recurring: http://localhost:${PORT}/recurring/`);
     console.log(`   Shopping List: http://localhost:${PORT}/shopping-list/`);
     console.log('\n📊 Press Ctrl+C to stop\n');
 

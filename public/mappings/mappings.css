@@ -10,6 +10,37 @@
     border-radius: 8px;
 }
 
+/* Mapping actions (icon buttons) */
+.mapping-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.btn-icon-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 6px;
+    color: var(--color-text-muted, #888);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-action:hover {
+    color: var(--spierings-orange);
+    background: rgba(253, 195, 0, 0.15);
+}
+
+/* Status shown inline on mobile, hidden on desktop */
+.mapping-status-mobile {
+    display: none;
+}
+
 .table-wrapper {
     overflow-x: auto;
 }
@@ -150,4 +181,86 @@
     background: var(--bg-dark);
     border: 1px solid var(--neon-green);
     border-radius: 8px;
+}
+
+/* =====================
+   Responsive Mappings
+   ===================== */
+@media (max-width: 768px) {
+    /* Hide the table header */
+    #mappings-table thead {
+        display: none;
+    }
+
+    #mappings-table,
+    #mappings-table tbody,
+    #mappings-table tr,
+    #mappings-table td {
+        display: block;
+        width: 100%;
+    }
+
+    #mappings-table tr {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        grid-template-rows: auto auto;
+        gap: 4px 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        background: var(--color-bg);
+    }
+
+    #mappings-table td {
+        padding: 0;
+        border-bottom: none;
+    }
+
+    /* Column 1: Ingredient name + status below */
+    #mappings-table td:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .mapping-status-mobile {
+        display: inline-flex;
+        gap: 4px;
+        margin-left: 8px;
+    }
+
+    /* Column 2: Jumbo product */
+    .mapping-product-cell {
+        grid-column: 1;
+        grid-row: 2;
+        font-size: 13px;
+        color: var(--color-text-muted);
+    }
+
+    /* Column 3: Package */
+    .mapping-package-cell {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        font-size: 12px;
+        text-align: right;
+        align-self: center;
+    }
+
+    /* Column 4: Status (desktop) — hide on mobile */
+    .mapping-status-cell {
+        display: none !important;
+    }
+
+    /* Column 5: Actions */
+    #mappings-table td:nth-child(5) {
+        grid-column: 3;
+        grid-row: 1 / 3;
+        align-self: center;
+    }
+
+    .mapping-actions {
+        flex-direction: column;
+        gap: 2px;
+    }
 }

@@ -259,12 +259,12 @@ h1, h2, h3, h4 {
 }
 
 .btn::before {
-    right: 100%;
+    right: calc(100% - 1px);
     clip-path: url(#btn-left-shape);
 }
 
 .btn::after {
-    left: 100%;
+    left: calc(100% - 1px);
     clip-path: url(#btn-right-shape);
 }
 
@@ -1018,6 +1018,38 @@ select {
 }
 
 /* =====================
+   Trash / Icon Action Buttons
+   ===================== */
+.btn-trash {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--color-text-muted, #888);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-trash:hover {
+    color: var(--color-error);
+    background: rgba(211, 47, 47, 0.1);
+}
+
+.btn-trash--confirm.armed {
+    color: var(--color-error);
+    background: rgba(211, 47, 47, 0.15);
+    animation: trash-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes trash-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* =====================
    Utility
    ===================== */
 .hidden {
@@ -1298,6 +1330,14 @@ select {
         border-left: 3px solid var(--spierings-yellow);
     }
 
+    /* Badge inline in mobile nav instead of floating outside */
+    .main-header nav .badge {
+        position: static;
+        display: inline-block;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+
     .page-container {
         padding: 12px;
     }
@@ -1327,4 +1367,213 @@ select {
         width: 95%;
         max-height: 95vh;
     }
+
+    .voice-results-panel {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* =====================
+   Nav Basket Link (in hamburger)
+   ===================== */
+.nav-basket-link {
+    border-top: 2px solid var(--spierings-yellow) !important;
+    margin-top: 8px;
+}
+
+/* =====================
+   Voice Button
+   ===================== */
+.voice-btn {
+    background: none;
+    border: 2px solid var(--spierings-orange);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--spierings-orange);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.voice-btn:hover {
+    background: var(--spierings-orange);
+    color: #fff;
+}
+
+.voice-btn.recording {
+    background: var(--color-error);
+    border-color: var(--color-error);
+    color: #fff;
+    animation: voice-pulse-btn 1s ease-in-out infinite;
+}
+
+@keyframes voice-pulse-btn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* =====================
+   Voice Recording Overlay
+   ===================== */
+.voice-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(180, 30, 30, 0.85);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.voice-overlay.active {
+    display: flex;
+}
+
+.voice-overlay-content {
+    text-align: center;
+    color: #fff;
+    position: relative;
+}
+
+.voice-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    animation: voice-ring 1.5s ease-out infinite;
+}
+
+@keyframes voice-ring {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+.voice-mic-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.voice-status-text {
+    margin-top: 20px;
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* =====================
+   Voice Results Panel
+   ===================== */
+.voice-results-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(55, 63, 67, 0.5);
+    z-index: 1200;
+    display: none;
+}
+
+.voice-results-overlay.active {
+    display: block;
+}
+
+.voice-results-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    height: 100vh;
+    background: var(--color-bg);
+    z-index: 1201;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 20px rgba(55, 63, 67, 0.15);
+}
+
+.voice-results-panel.active {
+    transform: translateX(0);
+}
+
+.voice-processing {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-text-muted);
+}
+
+.voice-processing .spinner {
+    margin: 0 auto 12px;
+}
+
+.voice-transcript {
+    padding: 12px 16px;
+    background: var(--color-bg-alt);
+    border-radius: 8px;
+    margin: 12px 16px;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    border-left: 3px solid var(--spierings-orange);
+}
+
+.voice-actions-list {
+    list-style: none;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.voice-action-item {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.voice-action-item.success {
+    border-color: var(--color-success);
+    background: rgba(46, 125, 50, 0.05);
+}
+
+.voice-action-item.error {
+    border-color: var(--color-error);
+    background: rgba(211, 47, 47, 0.05);
+}
+
+.voice-action-item.pending-confirm {
+    border-color: var(--spierings-orange);
+    background: rgba(242, 144, 27, 0.08);
+}
+
+.voice-action-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.voice-action-detail {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+.voice-action-confirm {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.voice-action-confirm .btn {
+    flex: 1;
 }

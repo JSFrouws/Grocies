@@ -1,9 +1,21 @@
 // Voorraad (Stock/Inventory) page logic
 
+let mappedDefaults = []; // cached from /api/mappings/defaults
+let selectedMapping = null; // currently selected mapping for add form
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadHeader('voorraad');
+    loadMappedDefaults();
     loadStock();
 });
+
+// Load mapped ingredient defaults for autocomplete
+async function loadMappedDefaults() {
+    try {
+        const data = await apiRequest('/mappings/defaults');
+        mappedDefaults = data.defaults || [];
+    } catch (e) { /* handled */ }
+}
 
 async function loadStock() {
     try {
@@ -35,11 +47,24 @@ function renderStock(items) {
 
     let html = '';
     for (const [name, groupItems] of Object.entries(groups)) {
+        // Find preferred unit from mappings
+        const mapping = mappedDefaults.find(m => m.ingredient_name === name);
+        const prefUnit = mapping ? mapping.package_unit : null;
+
         html += `<div class="stock-group">`;
         html += `<div class="stock-group-header">${escapeHtml(name)}</div>`;
         for (const item of groupItems) {
             const statusClass = item.isExpired ? 'expired' : (item.isWarning ? 'warning' : '');
             const expiryClass = item.isExpired ? 'expired' : (item.isWarning ? 'warning' : '');
+
+            // Format quantity using preferred unit
+            let displayQty = item.quantity_remaining;
+            let displayUnit = item.unit;
+            if (prefUnit && typeof formatQty === 'function') {
+                const fmt = formatQty(item.quantity_remaining, item.unit, prefUnit);
+                displayQty = fmt.amount;
+                displayUnit = fmt.unit;
+            }
 
             let expiryText = '';
             if (item.expiry_date) {
@@ -60,7 +85,7 @@ function renderStock(items) {
             <div class="stock-item ${statusClass}">
                 <div class="stock-item-info">
                     <div class="stock-item-name">${escapeHtml(item.ingredient_name)}</div>
-                    <div class="stock-item-qty">${item.quantity_remaining} ${escapeHtml(item.unit)}</div>
+                    <div class="stock-item-qty">${displayQty} ${escapeHtml(displayUnit)}</div>
                 </div>
                 <div class="stock-item-expiry ${expiryClass}">${expiryText}</div>
                 <div class="stock-item-actions">
@@ -89,18 +114,140 @@ async function checkExpired() {
     } catch (e) { /* handled */ }
 }
 
+// =====================
+// Add Stock Modal with autocomplete
+// =====================
 function openAddStock() {
+    selectedMapping = null;
     document.getElementById('stock-ingredient').value = '';
     document.getElementById('stock-quantity').value = '';
     document.getElementById('stock-unit').value = '';
     document.getElementById('stock-shelf-life').value = '';
+    document.getElementById('stock-ingredient-hint').classList.add('hidden');
+    document.getElementById('stock-ingredient-info').classList.add('hidden');
+    document.getElementById('stock-autocomplete').classList.add('hidden');
+    document.getElementById('stock-save-btn').disabled = false;
     openModal('add-stock-modal');
+}
+
+// Setup autocomplete on ingredient input
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('stock-ingredient');
+    const dropdown = document.getElementById('stock-autocomplete');
+    if (!input || !dropdown) return;
+
+    input.addEventListener('input', () => {
+        const val = input.value.trim().toLowerCase();
+        const hint = document.getElementById('stock-ingredient-hint');
+        const info = document.getElementById('stock-ingredient-info');
+
+        if (val.length < 1) {
+            dropdown.classList.add('hidden');
+            hint.classList.add('hidden');
+            info.classList.add('hidden');
+            selectedMapping = null;
+            return;
+        }
+
+        const matches = mappedDefaults.filter(m =>
+            m.ingredient_name.toLowerCase().includes(val)
+        ).slice(0, 10);
+
+        if (matches.length === 0) {
+            dropdown.classList.add('hidden');
+            // Show hint: ingredient not mapped
+            hint.classList.remove('hidden');
+            info.classList.add('hidden');
+            selectedMapping = null;
+            return;
+        }
+
+        hint.classList.add('hidden');
+        dropdown.classList.remove('hidden');
+        dropdown.innerHTML = matches.map(m => {
+            const details = m.product_title ? ` <span class="text-muted">(${escapeHtml(m.product_title)})</span>` : '';
+            const pkg = m.package_amount && m.package_unit ? ` - ${m.package_amount} ${m.package_unit}` : '';
+            return `<div class="stock-autocomplete-item" data-name="${escapeHtml(m.ingredient_name)}">${escapeHtml(m.ingredient_name)}${details}${pkg}</div>`;
+        }).join('');
+
+        dropdown.querySelectorAll('.stock-autocomplete-item').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                selectMappedIngredient(item.dataset.name);
+            });
+        });
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.add('hidden'), 200);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') dropdown.classList.add('hidden');
+        if (e.key === 'Enter') {
+            const topItem = dropdown.querySelector('.stock-autocomplete-item');
+            if (topItem && !dropdown.classList.contains('hidden')) {
+                e.preventDefault();
+                selectMappedIngredient(topItem.dataset.name);
+                document.getElementById('stock-quantity').focus();
+            }
+        }
+    });
+
+    // Submit stock form on Enter from any field (except ingredient when dropdown is open)
+    ['stock-quantity', 'stock-unit', 'stock-shelf-life'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveStock(); }
+        });
+    });
+
+    // Submit edit-qty form on Enter
+    const editQty = document.getElementById('edit-qty-value');
+    if (editQty) editQty.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); updateQuantity(); }
+    });
+});
+
+function selectMappedIngredient(name) {
+    const mapping = mappedDefaults.find(m => m.ingredient_name === name);
+    if (!mapping) return;
+
+    selectedMapping = mapping;
+    const input = document.getElementById('stock-ingredient');
+    const dropdown = document.getElementById('stock-autocomplete');
+    const hint = document.getElementById('stock-ingredient-hint');
+    const info = document.getElementById('stock-ingredient-info');
+
+    input.value = mapping.ingredient_name;
+    dropdown.classList.add('hidden');
+    hint.classList.add('hidden');
+
+    // Auto-fill defaults from mapping
+    if (mapping.package_amount) {
+        document.getElementById('stock-quantity').value = mapping.package_amount;
+    }
+    if (mapping.package_unit) {
+        document.getElementById('stock-unit').value = normalizeUnit(mapping.package_unit);
+    }
+    if (mapping.shelf_life_days) {
+        document.getElementById('stock-shelf-life').value = mapping.shelf_life_days;
+    }
+
+    // Show info about selected product
+    let infoHtml = `<strong>${escapeHtml(mapping.ingredient_name)}</strong>`;
+    if (mapping.product_title) infoHtml += ` &rarr; ${escapeHtml(mapping.product_title)}`;
+    if (mapping.package_amount && mapping.package_unit) {
+        infoHtml += ` (${mapping.package_amount} ${escapeHtml(mapping.package_unit)})`;
+    }
+    info.innerHTML = infoHtml;
+    info.classList.remove('hidden');
 }
 
 async function saveStock() {
     const ingredient_name = document.getElementById('stock-ingredient').value.trim();
     const quantity_remaining = document.getElementById('stock-quantity').value;
-    const unit = document.getElementById('stock-unit').value.trim();
+    const unit = document.getElementById('stock-unit').value;
     const shelf_life_days = document.getElementById('stock-shelf-life').value;
 
     if (!ingredient_name || !quantity_remaining || !unit) {
@@ -108,14 +255,24 @@ async function saveStock() {
         return;
     }
 
+    // Validate: ingredient must be in mappings
+    const isMapped = mappedDefaults.some(m => m.ingredient_name.toLowerCase() === ingredient_name.toLowerCase().trim());
+    if (!isMapped) {
+        showToast('Dit ingredi\u00EBnt is niet gekoppeld. Koppel het eerst in de Koppelingen tab.', 'error');
+        document.getElementById('stock-ingredient-hint').classList.remove('hidden');
+        return;
+    }
+
     try {
+        const mapping = mappedDefaults.find(m => m.ingredient_name.toLowerCase() === ingredient_name.toLowerCase().trim());
         await apiRequest('/stock', {
             method: 'POST',
             body: JSON.stringify({
                 ingredient_name,
                 quantity_remaining: parseFloat(quantity_remaining),
                 unit,
-                shelf_life_days: shelf_life_days ? parseInt(shelf_life_days) : null
+                shelf_life_days: shelf_life_days ? parseInt(shelf_life_days) : null,
+                jumbo_sku: mapping ? mapping.jumbo_sku : null
             })
         });
         closeModal('add-stock-modal');
@@ -162,7 +319,6 @@ async function discardItem(id, name) {
 }
 
 function showExpired() {
-    // Scroll to first expired item or show message
     const expiredItems = document.querySelectorAll('.stock-item.expired');
     if (expiredItems.length > 0) {
         expiredItems[0].scrollIntoView({ behavior: 'smooth', block: 'center' });

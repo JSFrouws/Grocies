@@ -39,6 +39,20 @@ function setupShoppingListRoutes(shoppingListService, authService, getJumboClien
                 itemsToAdd = itemsToAdd.filter(item => selectedSkus.includes(item.jumboSku));
             }
 
+            // Add selected recurring items
+            const recurringToAdd = (shoppingList.recurringItems || [])
+                .filter(item => item.jumboSku && (!selectedSkus || selectedSkus.includes(item.jumboSku)))
+                .map(item => ({
+                    ingredientName: item.itemName,
+                    jumboSku: item.jumboSku,
+                    productDetails: item.productDetails,
+                    packagesNeeded: item.quantity,
+                    aggregatedQuantity: [{ amount: item.quantity, unit: 'stuks' }],
+                    isRecurring: true
+                }));
+
+            itemsToAdd = [...itemsToAdd, ...recurringToAdd];
+
             if (itemsToAdd.length === 0) {
                 return res.status(400).json({
                     success: false,

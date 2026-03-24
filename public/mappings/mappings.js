@@ -32,42 +32,42 @@ function renderMappings(mappings) {
 
     tbody.innerHTML = mappings.map(m => {
         const details = m.product_details || {};
-        let statusTags = '';
-        if (m.preferred) {
-            statusTags += '<span class="tag">Voorkeur</span> ';
-        } else {
-            statusTags += '<span class="tag tag-warning">Alt</span> ';
-        }
-        if (m.skip_in_list) {
-            statusTags += '<span class="tag tag-muted">Overslaan</span>';
-        }
+        const statusLabel = m.preferred ? 'Voorkeur' : 'Alt';
+        const statusClass = m.preferred ? '' : ' tag-warning';
+        let skipTag = m.skip_in_list ? ' <span class="tag tag-muted">Overslaan</span>' : '';
 
         // Package info column
         let packageInfo = '';
         if (m.package_amount && m.package_unit) {
             packageInfo = `${m.package_amount} ${escapeHtml(m.package_unit)}`;
             if (m.shelf_life_days) {
-                packageInfo += `<br><span class="text-muted">${m.shelf_life_days} dagen houdbaar</span>`;
+                packageInfo += `<br><span class="text-muted">${m.shelf_life_days}d</span>`;
             }
         } else {
             packageInfo = '<span class="text-muted">-</span>';
         }
 
+        const trashSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+        const editSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
         return `
         <tr>
-            <td><strong>${escapeHtml(m.ingredient_name)}</strong></td>
             <td>
+                <strong>${escapeHtml(m.ingredient_name)}</strong>
+                <span class="mapping-status-mobile"><span class="tag${statusClass}">${statusLabel}</span>${skipTag}</span>
+            </td>
+            <td class="mapping-product-cell">
                 <div style="display:flex;align-items:center;gap:8px">
                     ${details.image ? `<img src="${details.image}" style="width:30px;height:30px;object-fit:contain;border-radius:4px">` : ''}
                     <span>${escapeHtml(details.title || m.jumbo_sku)}</span>
                 </div>
             </td>
-            <td>${packageInfo}</td>
-            <td>${statusTags}</td>
+            <td class="mapping-package-cell">${packageInfo}</td>
+            <td class="mapping-status-cell"><span class="tag${statusClass}">${statusLabel}</span>${skipTag}</td>
             <td>
-                <div style="display:flex;gap:6px">
-                    <button class="btn btn-secondary btn-small" onclick="editMapping(${m.id})">Bewerken</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteMapping(${m.id})">Verwijderen</button>
+                <div class="mapping-actions">
+                    <button class="btn-icon-action" onclick="editMapping(${m.id})" title="Bewerken">${editSvg}</button>
+                    <button class="btn-trash btn-trash--confirm" onclick="confirmDeleteMapping(this, ${m.id})" title="Verwijderen">${trashSvg}</button>
                 </div>
             </td>
         </tr>`;
@@ -84,7 +84,7 @@ async function checkUnmapped() {
 
         if (unmappedIngredients.length > 0) {
             alert.classList.remove('hidden');
-            countEl.innerHTML = `<span class="tag tag-warning">${unmappedIngredients.length} ongekoppeld${unmappedIngredients.length > 1 ? 'e' : ''} ingredi\u00EBnt${unmappedIngredients.length > 1 ? 'en' : ''} in wachtrij</span>`;
+            countEl.innerHTML = `<span class="tag tag-warning">${unmappedIngredients.length} ongekoppeld</span>`;
         } else {
             alert.classList.add('hidden');
         }
@@ -150,6 +150,16 @@ function setupSimilarLookup() {
         }
         similarDebounceTimer = setTimeout(() => lookupSimilar(name), 400);
     });
+    ingredientInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const similarEl = document.getElementById('similar-mappings');
+            const firstBtn = similarEl?.querySelector('[data-similar-index]');
+            if (firstBtn && !similarEl.classList.contains('hidden')) {
+                e.preventDefault();
+                useSimilarProduct(0);
+            }
+        }
+    });
 }
 
 async function lookupSimilar(ingredientName) {
@@ -200,7 +210,7 @@ function useSimilarProduct(index) {
 
     // Also fill package info from similar mapping
     if (m.package_amount) document.getElementById('mapping-package-amount').value = m.package_amount;
-    if (m.package_unit) document.getElementById('mapping-package-unit').value = m.package_unit;
+    if (m.package_unit) document.getElementById('mapping-package-unit').value = typeof normalizeUnit === 'function' ? normalizeUnit(m.package_unit) : m.package_unit;
     if (m.shelf_life_days) document.getElementById('mapping-shelf-life').value = m.shelf_life_days;
 
     const selectedEl = document.getElementById('selected-product');
@@ -233,7 +243,7 @@ function openMappingForm(mapping = null, prefillIngredient = null) {
 
     // Package fields
     document.getElementById('mapping-package-amount').value = mapping ? (mapping.package_amount || '') : '';
-    document.getElementById('mapping-package-unit').value = mapping ? (mapping.package_unit || '') : '';
+    document.getElementById('mapping-package-unit').value = mapping ? (typeof normalizeUnit === 'function' ? normalizeUnit(mapping.package_unit || '') : (mapping.package_unit || '')) : '';
     document.getElementById('mapping-shelf-life').value = mapping ? (mapping.shelf_life_days || '') : '';
 
     const selectedEl = document.getElementById('selected-product');
@@ -346,6 +356,36 @@ function selectProduct(index) {
 
     document.getElementById('product-results').classList.add('hidden');
     showToast('Product geselecteerd', 'success', 2000);
+
+    // Auto-extract package info via LLM if fields are empty
+    const pkgAmount = document.getElementById('mapping-package-amount').value;
+    const pkgUnit = document.getElementById('mapping-package-unit').value;
+    if (!pkgAmount && !pkgUnit && p.title) {
+        autoExtractPackageInfo(p.title, document.getElementById('mapping-ingredient').value.trim());
+    }
+}
+
+async function autoExtractPackageInfo(productTitle, ingredientName) {
+    try {
+        const data = await apiRequest('/mappings/extract-package', {
+            method: 'POST',
+            body: JSON.stringify({ product_title: productTitle, ingredient_name: ingredientName })
+        });
+        if (data.extracted) {
+            const e = data.extracted;
+            if (e.package_amount && !document.getElementById('mapping-package-amount').value) {
+                document.getElementById('mapping-package-amount').value = e.package_amount;
+            }
+            if (e.package_unit && !document.getElementById('mapping-package-unit').value) {
+                const norm = typeof normalizeUnit === 'function' ? normalizeUnit(e.package_unit) : e.package_unit;
+                document.getElementById('mapping-package-unit').value = norm;
+            }
+            if (e.shelf_life_days && !document.getElementById('mapping-shelf-life').value) {
+                document.getElementById('mapping-shelf-life').value = e.shelf_life_days;
+            }
+            showToast('Verpakkingsinfo automatisch ingevuld', 'info', 2000);
+        }
+    } catch (e) { /* silent - this is a convenience feature */ }
 }
 
 // Save mapping
@@ -425,9 +465,20 @@ async function editMapping(id) {
     } catch (e) { /* handled */ }
 }
 
-// Delete mapping
+// Delete mapping (double-click to confirm)
+let confirmMappingTimer = null;
+function confirmDeleteMapping(btn, id) {
+    if (btn.classList.contains('armed')) {
+        clearTimeout(confirmMappingTimer);
+        btn.classList.remove('armed');
+        deleteMapping(id);
+        return;
+    }
+    btn.classList.add('armed');
+    confirmMappingTimer = setTimeout(() => btn.classList.remove('armed'), 3000);
+}
+
 async function deleteMapping(id) {
-    if (!confirm('Deze koppeling verwijderen?')) return;
     try {
         await apiRequest(`/mappings/${id}`, { method: 'DELETE' });
         showToast('Koppeling verwijderd', 'success');
@@ -442,4 +493,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMappings();
     checkUnmapped();
     setupSimilarLookup();
+
+    // Enter-to-save on package info fields
+    ['mapping-package-amount', 'mapping-package-unit', 'mapping-shelf-life'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveMapping(); }
+        });
+    });
 });

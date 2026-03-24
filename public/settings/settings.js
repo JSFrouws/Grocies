@@ -34,6 +34,18 @@ function populateForm(s) {
         tokenInput.placeholder = s.github_token_masked || 'ghp_…';
     }
 
+    const anthropicInput = document.getElementById('anthropic_api_key');
+    if (anthropicInput) {
+        anthropicInput.value = '';
+        anthropicInput.placeholder = s.anthropic_api_key_masked || 'sk-ant-…';
+    }
+
+    const mistralInput = document.getElementById('mistral_api_key');
+    if (mistralInput) {
+        mistralInput.value = '';
+        mistralInput.placeholder = s.mistral_api_key_masked || 'sk-…';
+    }
+
     // App info
     const versionEl = document.getElementById('info-version');
     if (versionEl) versionEl.textContent = s.app_version || '—';
@@ -59,9 +71,15 @@ async function saveAll() {
         github_repo: document.getElementById('github_repo')?.value?.trim()
     };
 
-    // Only include token if the user actually typed something new
+    // Only include tokens if the user actually typed something new
     const tokenVal = document.getElementById('github_token')?.value?.trim();
     if (tokenVal) updates.github_token = tokenVal;
+
+    const anthropicVal = document.getElementById('anthropic_api_key')?.value?.trim();
+    if (anthropicVal) updates.anthropic_api_key = anthropicVal;
+
+    const mistralVal = document.getElementById('mistral_api_key')?.value?.trim();
+    if (mistralVal) updates.mistral_api_key = mistralVal;
 
     try {
         const data = await apiRequest('/settings', {
@@ -127,6 +145,18 @@ async function testGitHub() {
 
 function toggleTokenVisibility() {
     const input = document.getElementById('github_token');
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function toggleAnthropicKeyVisibility() {
+    const input = document.getElementById('anthropic_api_key');
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function toggleMistralKeyVisibility() {
+    const input = document.getElementById('mistral_api_key');
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
 }

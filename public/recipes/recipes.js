@@ -36,10 +36,26 @@ function renderRecipeGrid() {
         <div class="card recipe-card" onclick="viewRecipe(${r.id})">
             ${r.image_path
                 ? `<img src="/uploads/recipes/${r.image_path.split('/').pop()}" class="recipe-card-image" alt="${escapeHtml(r.name)}">`
-                : `<div class="recipe-card-image recipe-placeholder">${r.cuisine ? r.cuisine[0].toUpperCase() : '?'}</div>`
+                : `<div class="recipe-card-image recipe-placeholder">
+                    <label class="photo-upload-btn" onclick="event.stopPropagation()" title="Foto toevoegen">
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadCardPhoto(${r.id}, this)">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span>+</span>
+                    </label>
+                  </div>`
             }
             <div class="recipe-card-body">
-                <h3 class="recipe-card-title">${escapeHtml(r.name)}</h3>
+                <div class="recipe-card-title-row">
+                    <h3 class="recipe-card-title">${escapeHtml(r.name)}</h3>
+                    <button class="btn-trash btn-trash--confirm" onclick="event.stopPropagation(); confirmDeleteRecipe(this, ${r.id})" title="Recept verwijderen">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="recipe-card-meta">
                     ${r.cuisine ? `<span>${escapeHtml(r.cuisine)}</span>` : ''}
                     ${r.country_of_origin ? `<span>${escapeHtml(r.country_of_origin)}</span>` : ''}
@@ -133,23 +149,30 @@ function addIngredientRow(ing = null) {
     const list = document.getElementById('ingredients-list');
     const row = document.createElement('div');
     row.className = 'ingredient-row';
+    const unitVal = ing ? normalizeUnit(ing.unit || '') : '';
+    const unitOptions = ['L', 'mL', 'g', 'kg', 'stuks'].map(u =>
+        `<option value="${u}"${unitVal === u ? ' selected' : ''}>${u}</option>`
+    ).join('');
     row.innerHTML = `
         <div class="ing-name-wrapper">
             <input type="text" placeholder="Ingredi\u00EBnt" class="ing-name" value="${ing ? escapeHtml(ing.name) : ''}" required autocomplete="off">
             <div class="ing-autocomplete hidden"></div>
         </div>
         <input type="text" placeholder="Hoeveelheid" class="ing-amount" value="${ing ? ing.amount : ''}">
-        <input type="text" placeholder="Eenheid" class="ing-unit" value="${ing ? (ing.unit || '') : ''}">
+        <select class="ing-unit">
+            <option value="">Eenheid</option>
+            ${unitOptions}
+        </select>
         <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="border-color:var(--error);color:var(--error)">&times;</button>
     `;
     list.appendChild(row);
 
     const nameInput = row.querySelector('.ing-name');
     const dropdown = row.querySelector('.ing-autocomplete');
-    setupIngredientAutocomplete(nameInput, dropdown);
+    setupIngredientAutocomplete(nameInput, dropdown, row);
 }
 
-function setupIngredientAutocomplete(input, dropdown) {
+function setupIngredientAutocomplete(input, dropdown, row) {
     input.addEventListener('input', () => {
         const val = input.value.trim().toLowerCase();
         if (val.length < 1) {
@@ -170,6 +193,18 @@ function setupIngredientAutocomplete(input, dropdown) {
                 e.preventDefault();
                 input.value = item.textContent;
                 dropdown.classList.add('hidden');
+                // Auto-fill unit from mapping defaults if available
+                if (row && window._mappedIngredientDefaults) {
+                    const mapping = window._mappedIngredientDefaults.find(
+                        m => m.ingredient_name === item.textContent.toLowerCase().trim()
+                    );
+                    if (mapping && mapping.package_unit) {
+                        const unitSelect = row.querySelector('.ing-unit');
+                        if (unitSelect) {
+                            unitSelect.value = normalizeUnit(mapping.package_unit);
+                        }
+                    }
+                }
             });
         });
     });
@@ -178,6 +213,16 @@ function setupIngredientAutocomplete(input, dropdown) {
     });
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') dropdown.classList.add('hidden');
+        if (e.key === 'Enter') {
+            const topItem = dropdown.querySelector('.ing-autocomplete-item');
+            if (topItem && !dropdown.classList.contains('hidden')) {
+                e.preventDefault();
+                topItem.dispatchEvent(new Event('mousedown'));
+                // Move focus to amount field
+                const amountInput = row.querySelector('.ing-amount');
+                if (amountInput) amountInput.focus();
+            }
+        }
     });
 }
 
@@ -185,6 +230,13 @@ async function loadExistingIngredients() {
     try {
         const data = await apiRequest('/recipes/meta/ingredients');
         existingIngredients = data.ingredients || [];
+    } catch (e) { /* handled */ }
+}
+
+async function loadMappedIngredientDefaults() {
+    try {
+        const data = await apiRequest('/mappings/defaults');
+        window._mappedIngredientDefaults = data.defaults || [];
     } catch (e) { /* handled */ }
 }
 
@@ -295,7 +347,9 @@ async function viewRecipe(id) {
         document.getElementById('detail-footer').innerHTML = `
             <button class="btn btn-secondary" onclick="addToQueue(${r.id})">Aan wachtrij toevoegen</button>
             <button class="btn btn-secondary" onclick="closeModal('recipe-detail-modal');openRecipeForm(${JSON.stringify(r).replace(/"/g, '&quot;')})">Bewerken</button>
-            <button class="btn btn-danger" onclick="deleteRecipe(${r.id})">Verwijderen</button>
+            <button class="btn-trash btn-trash--confirm" onclick="confirmDeleteRecipe(this, ${r.id})" title="Recept verwijderen" style="padding:8px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
         `;
 
         openModal('recipe-detail-modal');
@@ -314,13 +368,24 @@ async function addToQueue(recipeId) {
 }
 
 async function deleteRecipe(id) {
-    if (!confirm('Dit recept verwijderen?')) return;
     try {
         await apiRequest(`/recipes/${id}`, { method: 'DELETE' });
         showToast('Recept verwijderd', 'success');
         closeModal('recipe-detail-modal');
         loadRecipes();
     } catch (e) { /* handled */ }
+}
+
+let confirmDeleteTimer = null;
+function confirmDeleteRecipe(btn, id) {
+    if (btn.classList.contains('armed')) {
+        clearTimeout(confirmDeleteTimer);
+        btn.classList.remove('armed');
+        deleteRecipe(id);
+        return;
+    }
+    btn.classList.add('armed');
+    confirmDeleteTimer = setTimeout(() => btn.classList.remove('armed'), 3000);
 }
 
 // =====================
@@ -388,6 +453,26 @@ function copyRaw() {
 }
 
 // =====================
+// Upload photo from recipe card
+// =====================
+async function uploadCardPhoto(recipeId, input) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        await apiRequest(`/recipes/${recipeId}/image`, {
+            method: 'POST',
+            body: formData
+        });
+        showToast('Foto toegevoegd', 'success');
+        loadRecipes();
+    } catch (e) {
+        showToast('Foto uploaden mislukt', 'error');
+    }
+}
+
+// =====================
 // Init
 // =====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -414,4 +499,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFilters();
     loadGenerationCountries();
     loadExistingIngredients();
+    loadMappedIngredientDefaults();
 });

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-function setupMappingsRoutes(mappingService, llmService, getJumboClient) {
+function setupMappingsRoutes(mappingService, llmServiceOrGetter, getJumboClient) {
+    const getLLM = typeof llmServiceOrGetter === 'function' ? llmServiceOrGetter : () => llmServiceOrGetter;
 
     // IMPORTANT: Specific routes MUST come before /:id to avoid matching
 
@@ -38,9 +39,10 @@ function setupMappingsRoutes(mappingService, llmService, getJumboClient) {
             // LLM ranking
             let suggestion = null;
             let llmAvailable = false;
-            if (llmService) {
+            const llm = getLLM();
+            if (llm) {
                 try {
-                    suggestion = await llmService.suggestProductMapping(ingredient_name, products);
+                    suggestion = await llm.suggestProductMapping(ingredient_name, products);
                     llmAvailable = true;
                 } catch (e) {
                     console.error('LLM suggestion error:', e.message);
@@ -58,6 +60,36 @@ function setupMappingsRoutes(mappingService, llmService, getJumboClient) {
             res.json({ success: true, ingredient_name, products, suggestion, llmAvailable });
         } catch (error) {
             console.error('Suggest mapping error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // POST /api/mappings/extract-package - LLM-assisted package info extraction from product title
+    router.post('/extract-package', async (req, res) => {
+        try {
+            const { product_title, ingredient_name } = req.body;
+            if (!product_title) {
+                return res.status(400).json({ success: false, error: 'product_title is required' });
+            }
+            const llm = getLLM();
+            if (!llm) {
+                return res.json({ success: true, extracted: null, llmAvailable: false });
+            }
+            const extracted = await llm.extractPackageInfo(product_title, ingredient_name || '');
+            res.json({ success: true, extracted, llmAvailable: true });
+        } catch (error) {
+            console.error('Extract package error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // GET /api/mappings/defaults - Get mapped ingredient names with defaults
+    router.get('/defaults', (req, res) => {
+        try {
+            const defaults = mappingService.getMappedIngredientDefaults();
+            res.json({ success: true, defaults, count: defaults.length });
+        } catch (error) {
+            console.error('Get mapping defaults error:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     });

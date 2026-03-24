@@ -3,7 +3,9 @@
 // =====================
 
 // Detect base path — works both standalone (/) and inside iframe (/apps/Grocies/)
-const _base = document.baseURI ? new URL(document.baseURI).pathname.replace(/\/$/, '') : '';
+// Only use <base> tag href if explicitly set; otherwise default to root
+const _baseTag = document.querySelector('base[href]');
+const _base = _baseTag ? new URL(_baseTag.href).pathname.replace(/\/$/, '') : '';
 const API_BASE = _base + '/api';
 
 // =====================
@@ -215,6 +217,11 @@ async function loadHeader(currentPage) {
         // Kick off background session check — non-blocking
         checkAndEnsureSession();
 
+        // Load voice command module
+        const voiceScript = document.createElement('script');
+        voiceScript.src = _base + '/shared/voice-command.js';
+        document.body.appendChild(voiceScript);
+
     } catch (error) {
         console.error('Failed to load header:', error);
     }
@@ -237,11 +244,14 @@ async function updateQueueBadge() {
 }
 
 async function updateBasketBadge(count) {
-    const badge = document.getElementById('basket-count');
-    if (badge) {
-        badge.textContent = count || 0;
-        badge.classList.toggle('hidden', !count);
-    }
+    // Update both the old basket-count and the nav basket count
+    ['basket-count', 'nav-basket-count'].forEach(id => {
+        const badge = document.getElementById(id);
+        if (badge) {
+            badge.textContent = count || 0;
+            badge.classList.toggle('hidden', !count);
+        }
+    });
 }
 
 // =====================

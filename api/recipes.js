@@ -39,7 +39,8 @@ const upload = multer({
 });
 
 // Routes setup function
-function setupRecipeRoutes(recipeService, llmService) {
+function setupRecipeRoutes(recipeService, llmServiceOrGetter, mappingService) {
+    const getLLM = typeof llmServiceOrGetter === 'function' ? llmServiceOrGetter : () => llmServiceOrGetter;
 
     // IMPORTANT: Specific routes MUST come before /:id to avoid matching
 
@@ -100,15 +101,28 @@ function setupRecipeRoutes(recipeService, llmService) {
                 });
             }
 
-            if (!llmService) {
+            const llm = getLLM();
+            if (!llm) {
                 return res.status(503).json({
                     success: false,
-                    error: 'LLM service is not configured. Please set ANTHROPIC_API_KEY in .env'
+                    error: 'LLM service is not configured. Stel een Anthropic API key in via Instellingen.'
                 });
             }
 
             const existingIngredients = recipeService.getDistinctIngredients();
-            const result = await llmService.generateRecipe(country, instructions, existingIngredients);
+
+            // Build ingredient-to-unit mapping from preferred mappings
+            const ingredientUnits = {};
+            if (mappingService) {
+                const defaults = mappingService.getMappedIngredientDefaults();
+                for (const d of defaults) {
+                    if (d.package_unit) {
+                        ingredientUnits[d.ingredient_name] = d.package_unit;
+                    }
+                }
+            }
+
+            const result = await llm.generateRecipe(country, instructions, existingIngredients, ingredientUnits);
             res.json(result);
         } catch (error) {
             console.error('Error generating recipe:', error);

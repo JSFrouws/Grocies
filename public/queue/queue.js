@@ -94,7 +94,14 @@ function renderQueue(queue) {
             <div class="queue-item-image">
                 ${item.image_path
                     ? `<img src="/uploads/recipes/${item.image_path.split('/').pop()}" alt="${escapeHtml(item.name)}">`
-                    : `<span class="queue-placeholder">${(item.cuisine || '?')[0].toUpperCase()}</span>`
+                    : `<label class="photo-upload-btn photo-upload-btn--small" onclick="event.stopPropagation()" title="Foto toevoegen">
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadQueuePhoto(${item.recipe_id}, this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span>+</span>
+                      </label>`
                 }
             </div>
             <div class="queue-item-info">
@@ -107,7 +114,11 @@ function renderQueue(queue) {
             </div>
             <div class="queue-item-actions">
                 <button class="btn btn-primary btn-small" onclick="consumeRecipe(${item.id}, '${escapeHtml(item.name).replace(/'/g, "\\'")}')">Consumeren</button>
-                <button class="btn btn-danger btn-small" onclick="removeFromQueue(${item.id})">Verwijderen</button>
+                <button class="btn-trash" onclick="removeFromQueue(${item.id})" title="Verwijderen uit wachtrij">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                </button>
             </div>
         </div>`;
     }).join('');
@@ -144,7 +155,6 @@ async function consumeRecipe(id, name) {
 
 // Remove from queue
 async function removeFromQueue(id) {
-    if (!confirm('Verwijderen uit wachtrij?')) return;
     try {
         await apiRequest(`/queue/${id}`, { method: 'DELETE' });
         showToast('Verwijderd uit wachtrij', 'success');
@@ -223,6 +233,24 @@ async function loadHistory() {
             </div>
         `).join('');
     } catch (e) { /* handled */ }
+}
+
+// Upload photo from queue item
+async function uploadQueuePhoto(recipeId, input) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        await apiRequest(`/recipes/${recipeId}/image`, {
+            method: 'POST',
+            body: formData
+        });
+        showToast('Foto toegevoegd', 'success');
+        loadQueue();
+    } catch (e) {
+        showToast('Foto uploaden mislukt', 'error');
+    }
 }
 
 // Init

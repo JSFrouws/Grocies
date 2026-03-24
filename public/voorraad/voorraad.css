@@ -117,3 +117,69 @@
     padding-bottom: 4px;
     border-bottom: 1px solid var(--border-color);
 }
+
+/* Autocomplete dropdown */
+.stock-ingredient-wrapper {
+    position: relative;
+}
+
+.stock-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.stock-autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stock-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.stock-autocomplete-item:hover {
+    background: rgba(24, 180, 89, 0.1);
+}
+
+.stock-hint {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(245, 124, 0, 0.1);
+    border: 1px solid rgba(245, 124, 0, 0.3);
+    border-radius: 6px;
+    color: var(--color-warning);
+    font-size: 13px;
+}
+
+.stock-hint a {
+    color: var(--spierings-green, #18b459);
+    font-weight: 600;
+}
+
+.stock-selected-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(24, 180, 89, 0.08);
+    border: 1px solid rgba(24, 180, 89, 0.2);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}

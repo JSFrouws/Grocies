@@ -125,6 +125,33 @@
             </button>
         </section>
 
+        <!-- AI & Spraak -->
+        <section class="settings-section">
+            <h2>🤖 AI & Spraakbesturing</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="anthropic_api_key">Anthropic (Claude) API Key</label>
+                        <span class="setting-hint">Voor receptgeneratie, spraakinterpretatie en AI-functies. <a href="https://console.anthropic.com/settings/keys" target="_blank">Key aanmaken →</a></span>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="password" id="anthropic_api_key" placeholder="sk-ant-…" class="setting-input" autocomplete="new-password">
+                        <button class="btn btn-secondary btn-small" onclick="toggleAnthropicKeyVisibility()" title="Toon/verberg key">👁</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <label for="mistral_api_key">Mistral API Key</label>
+                        <span class="setting-hint">Voor Vox spraak-naar-tekst. <a href="https://console.mistral.ai/api-keys/" target="_blank">Key aanmaken →</a></span>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="password" id="mistral_api_key" placeholder="sk-…" class="setting-input" autocomplete="new-password">
+                        <button class="btn btn-secondary btn-small" onclick="toggleMistralKeyVisibility()" title="Toon/verberg key">👁</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- App info -->
         <section class="settings-section settings-section--muted">
             <h2>ℹ️ App informatie</h2>

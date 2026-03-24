@@ -44,15 +44,32 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Ingredi&euml;nt</label>
-                    <input type="text" id="stock-ingredient" placeholder="bijv. kipfilet" required>
+                    <div class="stock-ingredient-wrapper">
+                        <input type="text" id="stock-ingredient" placeholder="Zoek gekoppeld ingredi&euml;nt..." autocomplete="off" required>
+                        <div id="stock-autocomplete" class="stock-autocomplete hidden"></div>
+                    </div>
+                    <div id="stock-ingredient-hint" class="stock-hint hidden">
+                        Dit ingredi&euml;nt is niet gekoppeld. Ga eerst naar
+                        <a href="/mappings/">Koppelingen</a> om het aan een Jumbo product te koppelen.
+                    </div>
+                    <div id="stock-ingredient-info" class="stock-selected-info hidden"></div>
                 </div>
-                <div class="form-group">
-                    <label>Hoeveelheid</label>
-                    <input type="number" id="stock-quantity" placeholder="bijv. 500" step="any" required>
-                </div>
-                <div class="form-group">
-                    <label>Eenheid</label>
-                    <input type="text" id="stock-unit" placeholder="bijv. g, ml, stuks" required>
+                <div class="form-row">
+                    <div class="form-group" style="flex:1">
+                        <label>Hoeveelheid</label>
+                        <input type="number" id="stock-quantity" placeholder="bijv. 500" step="any" required>
+                    </div>
+                    <div class="form-group" style="flex:0 0 120px">
+                        <label>Eenheid</label>
+                        <select id="stock-unit" required>
+                            <option value="">Eenheid</option>
+                            <option value="L">L</option>
+                            <option value="mL">mL</option>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="stuks">stuks</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Houdbaarheid (dagen)</label>
@@ -61,7 +78,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('add-stock-modal')">Annuleren</button>
-                <button class="btn btn-primary" onclick="saveStock()">Toevoegen</button>
+                <button class="btn btn-primary" id="stock-save-btn" onclick="saveStock()">Toevoegen</button>
             </div>
         </div>
     </div>
@@ -88,6 +105,7 @@
     </div>
 
     <script src="/shared/utils.js"></script>
+    <script src="/shared/units.js"></script>
     <script src="voorraad.js"></script>
 </body>
 </html>
