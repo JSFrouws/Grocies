@@ -25,6 +25,9 @@ jobs:
           DEST="$HOME/Documents/WebApps/Grocies"
           mkdir -p "$DEST"
 
+          # Fix ownership if root (Docker) claimed the directory in a previous run
+          sudo chown -R "$(id -u):$(id -g)" "$DEST"
+
           # Sync everything except runtime-generated/secret files
           rsync -av --delete \
             --exclude='node_modules/' \
