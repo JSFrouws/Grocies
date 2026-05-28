@@ -107,6 +107,18 @@ function reinitLLM() {
     initVoiceService();
 }
 
+// Background auto-relogin middleware.
+// Any API request from the user triggers a background re-auth if the session is gone.
+// The request proceeds immediately — Jumbo-dependent routes degrade gracefully until
+// the relogin finishes (usually ~30s). The user never sees a login page.
+app.use('/api/', (req, res, next) => {
+    // Skip auth routes themselves to avoid recursive loops
+    if (!req.path.startsWith('/auth/')) {
+        authService.triggerAutoLogin();
+    }
+    next();
+});
+
 // Mount API routes
 app.use('/api/auth', require('./api/auth')(authService, getJumboClient));
 app.use('/api/store', require('./api/store')(authService, getJumboClient));
@@ -171,17 +183,12 @@ app.listen(PORT, () => {
     console.log(`   Shopping List: http://localhost:${PORT}/shopping-list/`);
     console.log('\n📊 Press Ctrl+C to stop\n');
 
-    // Auto-login on startup: always re-authenticate to ensure fresh cookies.
-    // Runs in background so it doesn't delay server readiness.
-    setTimeout(async () => {
+    // Kick off a background Jumbo re-auth at startup so the session is ready
+    // before the first user request arrives. Non-blocking — server is available immediately.
+    setTimeout(() => {
         if (authService.hasSavedCredentials()) {
             console.log('🔄 Background auto-login on startup...');
-            const result = await authService.autoLogin();
-            if (result.success) {
-                console.log('✓ Startup auto-login successful');
-            } else {
-                console.warn('⚠️  Startup auto-login failed:', result.error);
-            }
+            authService.triggerAutoLogin();
         } else {
             console.log('ℹ️  No saved credentials — open the app and log in via the connection sidebar');
         }

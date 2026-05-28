@@ -1,186 +1,253 @@
 /**
  * Jumbo Browser Authentication Module
  *
- * Uses Puppeteer to perform real browser login
- * This bypasses Cloudflare/Auth0 bot detection
+ * Uses Puppeteer to perform real browser login through the Auth0 flow at auth.jumbo.com.
+ * Jumbo's login page is a Nuxt SPA that JS-redirects to auth.jumbo.com — we handle both
+ * the SPA redirect and the multi-hop callback chain back to www.jumbo.com.
  */
 
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 class JumboBrowserAuth {
     constructor(options = {}) {
         this.verbose = options.verbose || false;
-        this.headless = options.headless !== false; // Default to headless
+        this.headless = options.headless !== false;
+        this.screenshotDir = options.screenshotDir || './data';
     }
 
     log(...args) {
-        if (this.verbose) console.log(...args);
+        if (this.verbose) console.log('[JumboAuth]', ...args);
     }
 
     /**
-     * Login using real browser automation
-     * Returns cookies string on success
+     * Login using real browser automation.
+     * Handles the full Auth0 flow:
+     *   www.jumbo.com/account/inloggen (Nuxt SPA)
+     *     → auth.jumbo.com/u/login?state=... (Auth0 Universal Login)
+     *     → (form submit)
+     *     → auth.jumbo.com/authorize/resume?state=...
+     *     → www.jumbo.com/api/auth/callback?code=...
+     *     → www.jumbo.com/ (logged in)
      */
     async login(username, password) {
-        this.log('\n🌐 Starting browser-based login...\n');
+        this.log('Starting browser-based login...');
 
         let browser;
         try {
-            // Launch browser
-            this.log('Launching browser...');
             browser = await puppeteer.launch({
                 headless: this.headless,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-web-security',
+                    '--lang=nl-NL'
+                ]
             });
 
             const page = await browser.newPage();
 
-            // Set viewport and user agent
-            await page.setViewport({ width: 1280, height: 720 });
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36');
+            // Hide Puppeteer automation signals to avoid bot detection
+            await page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                Object.defineProperty(navigator, 'languages', { get: () => ['nl-NL', 'nl', 'en'] });
+                window.chrome = { runtime: {} };
+            });
 
-            // Navigate to login page
-            this.log('Navigating to Jumbo login page...');
+            await page.setViewport({ width: 1280, height: 720 });
+            await page.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            );
+
+            // Accept cookies header to avoid consent popups blocking the form
+            await page.setExtraHTTPHeaders({ 'Accept-Language': 'nl-NL,nl;q=0.9' });
+
+            // Step 1: Navigate to Jumbo login page (Nuxt SPA)
+            this.log('Navigating to www.jumbo.com/account/inloggen...');
             await page.goto('https://www.jumbo.com/account/inloggen', {
-                waitUntil: 'networkidle2',
+                waitUntil: 'domcontentloaded',
                 timeout: 30000
             });
+            this.log('After goto, URL:', page.url());
 
-            // Wait for login form to appear
+            // Step 2: Nuxt SPA may redirect to auth.jumbo.com via JS — wait for it
+            if (!page.url().includes('auth.jumbo.com')) {
+                this.log('Waiting for Auth0 redirect from Nuxt SPA...');
+                try {
+                    await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
+                    this.log('After redirect, URL:', page.url());
+                } catch (navErr) {
+                    this.log('No navigation detected after goto — current URL:', page.url());
+                }
+            }
+
+            // If still not on auth.jumbo.com, try the direct auth endpoint
+            if (!page.url().includes('auth.jumbo.com')) {
+                this.log('Not on auth.jumbo.com, trying direct auth endpoint...');
+                await page.goto('https://www.jumbo.com/api/auth/login?returnTo=%2F', {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 15000
+                });
+                this.log('After direct auth, URL:', page.url());
+
+                if (!page.url().includes('auth.jumbo.com')) {
+                    await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {});
+                    this.log('After second wait, URL:', page.url());
+                }
+            }
+
+            // Step 3: Wait for the login form on auth.jumbo.com
             this.log('Waiting for login form...');
-            await page.waitForSelector('input[name="username"], input[type="email"], #username', {
-                timeout: 15000
-            });
+            await page.waitForSelector(
+                'input[name="username"], input[type="email"], #username, input[autocomplete="username"]',
+                { timeout: 15000, visible: true }
+            );
+            this.log('Login form found, URL:', page.url());
 
-            // Fill in credentials
-            this.log('Entering credentials...');
-
-            // Try different selector patterns for email field
-            const emailSelectors = ['input[name="username"]', 'input[type="email"]', '#username', 'input[autocomplete="email"]'];
+            // Step 4: Fill in email/username
+            const emailSelectors = [
+                'input[name="username"]',
+                'input[type="email"]',
+                '#username',
+                'input[autocomplete="username"]',
+                'input[autocomplete="email"]'
+            ];
             let emailField = null;
-            for (const selector of emailSelectors) {
-                emailField = await page.$(selector);
-                if (emailField) {
-                    this.log(`  Found email field: ${selector}`);
-                    break;
-                }
+            for (const sel of emailSelectors) {
+                emailField = await page.$(sel);
+                if (emailField) { this.log('Email field:', sel); break; }
             }
+            if (!emailField) throw new Error('Could not find email field');
 
-            if (!emailField) {
-                throw new Error('Could not find email input field');
-            }
+            await emailField.click({ clickCount: 3 });
+            await emailField.type(username, { delay: 40 });
 
-            await emailField.click({ clickCount: 3 }); // Select all
-            await emailField.type(username, { delay: 50 });
-
-            // Try different selector patterns for password field
-            const passwordSelectors = ['input[name="password"]', 'input[type="password"]', '#password'];
-            let passwordField = null;
-            for (const selector of passwordSelectors) {
-                passwordField = await page.$(selector);
-                if (passwordField) {
-                    this.log(`  Found password field: ${selector}`);
-                    break;
-                }
-            }
+            // Step 5: Some Auth0 forms are two-step (email → continue → password).
+            // Check if password is already visible, or if we need to click continue first.
+            let passwordField = await page.$('input[name="password"]') ||
+                                await page.$('input[type="password"]');
 
             if (!passwordField) {
-                throw new Error('Could not find password input field');
-            }
-
-            await passwordField.click({ clickCount: 3 }); // Select all
-            await passwordField.type(password, { delay: 50 });
-
-            // Click login button
-            this.log('Clicking login button...');
-            const buttonSelectors = ['button[type="submit"]', 'button[name="action"]', '.auth0-lock-submit', 'button:contains("Inloggen")'];
-            let loginButton = null;
-            for (const selector of buttonSelectors) {
-                try {
-                    loginButton = await page.$(selector);
-                    if (loginButton) {
-                        this.log(`  Found login button: ${selector}`);
-                        break;
-                    }
-                } catch (e) {
-                    // Selector not found, try next
+                this.log('Password not visible yet, looking for continue button...');
+                const continueButton = await page.$('button[type="submit"]');
+                if (continueButton) {
+                    await continueButton.click();
+                    await page.waitForSelector(
+                        'input[name="password"], input[type="password"]',
+                        { timeout: 10000, visible: true }
+                    ).catch(() => {});
+                    passwordField = await page.$('input[name="password"]') ||
+                                   await page.$('input[type="password"]');
                 }
             }
 
-            if (!loginButton) {
-                // Try finding by text content
-                loginButton = await page.evaluateHandle(() => {
-                    const buttons = Array.from(document.querySelectorAll('button'));
-                    return buttons.find(b => b.textContent.toLowerCase().includes('inloggen') || b.textContent.toLowerCase().includes('login'));
-                });
-            }
+            if (!passwordField) throw new Error('Could not find password field');
+            this.log('Password field found');
 
-            if (!loginButton) {
-                throw new Error('Could not find login button');
-            }
+            await passwordField.click({ clickCount: 3 });
+            await passwordField.type(password, { delay: 40 });
 
-            // Click and wait for navigation
+            // Step 6: Submit and wait for the full redirect chain back to www.jumbo.com
+            this.log('Submitting login form...');
+            const submitButton = await page.$('button[type="submit"]') ||
+                                 await page.$('button[name="action"]');
+            if (!submitButton) throw new Error('Could not find submit button');
+
+            // The chain: auth.jumbo.com/u/login → auth.jumbo.com/authorize/resume
+            //   → jumbo.com/api/auth/callback → www.jumbo.com/api/auth/callback → www.jumbo.com/
+            // We wait for the FIRST navigation (away from the login form), then poll until
+            // we land on www.jumbo.com (not auth.jumbo.com).
             await Promise.all([
-                page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
-                loginButton.click()
+                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
+                submitButton.click()
             ]);
 
-            // Wait a bit for cookies to be set
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // Check if login was successful by looking for account page or customer ID cookie
-            this.log('Checking login result...');
-            const cookies = await page.cookies();
-
-            // Find CdId cookie (Customer ID)
-            const cdIdCookie = cookies.find(c => c.name === 'CdId');
-            const authTokenCookie = cookies.find(c => c.name === 'authentication-token');
-
-            if (cdIdCookie || authTokenCookie) {
-                this.log('\n✅ Login successful!');
-
-                // Format cookies as string
-                const cookieString = cookies
-                    .filter(c => c.domain.includes('jumbo.com'))
-                    .map(c => `${c.name}=${c.value}`)
-                    .join('; ');
-
-                const customerId = cdIdCookie ? cdIdCookie.value : null;
-                this.log(`  Customer ID: ${customerId}`);
-                this.log(`  Cookies: ${cookieString.substring(0, 100)}...`);
-
-                await browser.close();
-
-                return {
-                    success: true,
-                    cookies: cookieString,
-                    customerId: customerId
-                };
-            } else {
-                // Check for error messages
-                const errorText = await page.evaluate(() => {
-                    const errorEl = document.querySelector('.error, .alert-danger, [class*="error"]');
-                    return errorEl ? errorEl.textContent : null;
-                });
-
-                if (errorText) {
-                    throw new Error(`Login failed: ${errorText}`);
-                }
-
-                throw new Error('Login failed - no authentication cookies received');
+            // Follow remaining redirects until we're on www.jumbo.com
+            const deadline = Date.now() + 20000;
+            while (
+                (page.url().includes('auth.jumbo.com') || page.url().includes('/api/auth/callback')) &&
+                Date.now() < deadline
+            ) {
+                this.log('Still in redirect chain, URL:', page.url());
+                await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => {});
             }
+
+            this.log('Final URL after login:', page.url());
+
+            // Small pause for cookies to settle
+            await new Promise(r => setTimeout(r, 1500));
+
+            // Step 7: Collect cookies
+            const cookies = await page.cookies();
+            this.log('Total cookies:', cookies.length);
+
+            const jumboContextCookies = cookies.filter(c =>
+                c.domain && (c.domain.includes('jumbo.com') || c.domain.includes('.jumbo.com'))
+            );
+
+            // Find auth indicators
+            const cdIdCookie = jumboContextCookies.find(c => c.name === 'CdId');
+            const authTokenCookie = jumboContextCookies.find(c =>
+                c.name === 'authentication-token' ||
+                c.name.toLowerCase().includes('auth') ||
+                c.name.toLowerCase().includes('token') ||
+                c.name.toLowerCase().includes('session')
+            );
+
+            if (this.verbose) {
+                this.log('Jumbo cookies:', jumboContextCookies.map(c => c.name).join(', '));
+            }
+
+            if (!cdIdCookie && !authTokenCookie && !page.url().startsWith('https://www.jumbo.com')) {
+                await this._saveDebugScreenshot(page, 'login-failed');
+                throw new Error(
+                    `Login failed — not redirected to jumbo.com (URL: ${page.url()}). ` +
+                    'Debug screenshot saved to data/login-failed.png'
+                );
+            }
+
+            // Even if CdId is missing, if we landed on www.jumbo.com the login likely succeeded
+            if (!cdIdCookie && !authTokenCookie) {
+                this.log('Warning: no explicit auth cookie found, but landed on www.jumbo.com — assuming success');
+            }
+
+            const cookieString = jumboContextCookies
+                .map(c => `${c.name}=${c.value}`)
+                .join('; ');
+
+            const customerId = cdIdCookie ? cdIdCookie.value : 'unknown';
+            this.log('Login successful, customerId:', customerId);
+
+            await browser.close();
+            return { success: true, cookies: cookieString, customerId };
 
         } catch (error) {
-            this.log(`\n❌ Login failed: ${error.message}`);
+            console.error('[JumboAuth] Login failed:', error.message);
 
             if (browser) {
+                try {
+                    const pages = await browser.pages();
+                    if (pages.length > 0) {
+                        await this._saveDebugScreenshot(pages[0], 'login-error');
+                    }
+                } catch (_) {}
                 await browser.close();
             }
 
-            return {
-                success: false,
-                error: error.message
-            };
+            return { success: false, error: error.message };
+        }
+    }
+
+    async _saveDebugScreenshot(page, name) {
+        try {
+            const screenshotPath = path.join(this.screenshotDir, `${name}.png`);
+            await page.screenshot({ path: screenshotPath, fullPage: true });
+            console.log(`[JumboAuth] Debug screenshot saved: ${screenshotPath}`);
+        } catch (e) {
+            console.warn('[JumboAuth] Could not save screenshot:', e.message);
         }
     }
 }
