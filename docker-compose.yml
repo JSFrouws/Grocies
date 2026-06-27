@@ -1,20 +1,21 @@
-  # base-tag: inject <base> tag in nginx proxy for iframe subpath support
 services:
   grocies:
+    # Server pulls this prebuilt image from GHCR (built by .github/workflows/build-push.yml).
+    # `build: .` stays so you can still `docker compose build` locally.
+    image: ghcr.io/${GHCR_OWNER:-jsfrouws}/grocies:latest
     build: .
     container_name: grocies
     restart: unless-stopped
     ports:
-      # APP_PORT is injected by WebApp Manager (8100-8199 range).
-      # Falls back to 8110 for direct `docker compose up` usage.
       - "${APP_PORT:-8110}:3000"
     volumes:
-      - grocies-data:/app/data
+      # Bind-mount under DATA_ROOT (instead of a named volume) so the SQLite DB
+      # + uploaded recipe images land in the tree that Kopia backs up.
+      - ${DATA_ROOT:-/home/ubuntu/Documents}/grocies/data:/app/data
     env_file:
       - .env
     environment:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
       - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
-volumes:
-  grocies-data:
+    # No watchtower label needed: the host-wide watcher updates everything by
+    # default (watch-all), and grocies is exactly what we want auto-updated.

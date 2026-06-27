@@ -28,3 +28,6 @@ Thumbs.db
 # Scratch / prototype folders
 JumboAPI_toBeRemoved/
 StoreManagementTestToBeRemoved/
+
+# Logs
+logs/
